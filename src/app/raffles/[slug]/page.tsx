@@ -62,10 +62,11 @@ export default async function RaffleDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const { count: entriesCount = 0 } = await supabase
+  const { count: entriesCountRaw } = await supabase
     .from("entries")
     .select("id", { count: "exact", head: true })
     .eq("raffle_id", raffle.id);
+  const entriesCount = entriesCountRaw ?? 0;
 
   const displayImages =
     raffle.image_urls && raffle.image_urls.length > 0
