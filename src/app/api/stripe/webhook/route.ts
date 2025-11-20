@@ -5,7 +5,7 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export const runtime = "nodejs";
 
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET ?? "";
 
 if (!webhookSecret) {
   throw new Error("Missing STRIPE_WEBHOOK_SECRET environment variable.");
