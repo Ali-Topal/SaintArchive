@@ -11,10 +11,10 @@ if (!webhookSecret) {
   throw new Error("Missing STRIPE_WEBHOOK_SECRET environment variable.");
 }
 
-const VALID_SIZES = ["S", "M", "L", "XL"] as const;
-type SizeOption = (typeof VALID_SIZES)[number];
-const isValidSize = (value?: string | null): value is SizeOption =>
-  !!value && VALID_SIZES.includes(value as SizeOption);
+const ALLOWED_SIZES = ["S", "M", "L", "XL"] as const;
+type SizeOption = (typeof ALLOWED_SIZES)[number];
+const isValidSize = (value: string | null | undefined): value is SizeOption =>
+  !!value && ALLOWED_SIZES.includes(value as SizeOption);
 
 export async function POST(request: Request) {
   const rawBody = await request.text();
@@ -29,83 +29,87 @@ export async function POST(request: Request) {
 
   try {
     event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
-    console.log(`[stripe-webhook] Received event ${event.type}`);
-  } catch (err) {
+  } catch (error) {
     const message =
-      err instanceof Error ? err.message : "Unable to verify signature.";
+      error instanceof Error ? error.message : "Unable to verify signature.";
     console.error("[stripe-webhook] Signature verification failed:", message);
-    return NextResponse.json({ error: message }, { status: 400 });
+    return NextResponse.json({ error: "Invalid signature." }, { status: 400 });
   }
 
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object as Stripe.Checkout.Session;
-    const raffleId = session.metadata?.raffleId;
-    const ticketCountRaw = session.metadata?.ticketCount;
-    const ticketCount = ticketCountRaw ? Number(ticketCountRaw) : NaN;
-    const metadataEmail = session.metadata?.email;
-    const email =
-      metadataEmail ??
-      session.customer_details?.email ??
-      session.customer_email ??
-      null;
-    const size = session.metadata?.size?.toUpperCase();
-    const paymentIntentId =
-      typeof session.payment_intent === "string"
-        ? session.payment_intent
-        : session.payment_intent?.id ?? null;
-    const customerId =
-      typeof session.customer === "string"
-        ? session.customer
-        : session.customer?.id ?? null;
+  if (event.type !== "checkout.session.completed") {
+    console.log(`[stripe-webhook] Ignored event ${event.type}`);
+    return NextResponse.json({ received: true }, { status: 200 });
+  }
 
-    if (
-      !raffleId ||
-      !Number.isFinite(ticketCount) ||
-      ticketCount < 1 ||
-      !email ||
-      !isValidSize(size)
-    ) {
-      console.warn(
-        "[stripe-webhook] Missing or invalid raffleId, ticketCount, email, or size in session metadata."
-      );
-      return NextResponse.json({ received: true }, { status: 200 });
-    }
+  const session = event.data.object as Stripe.Checkout.Session;
+  const raffleId = session.metadata?.raffleId ?? null;
+  const ticketCountRaw = session.metadata?.ticketCount ?? null;
+  const ticketCount = ticketCountRaw ? Number(ticketCountRaw) : NaN;
+  const size = session.metadata?.size?.toUpperCase() ?? null;
+  const email =
+    session.metadata?.email ??
+    session.customer_details?.email ??
+    session.customer_email ??
+    null;
+  const paymentIntentId =
+    typeof session.payment_intent === "string"
+      ? session.payment_intent
+      : session.payment_intent?.id ?? null;
+  const customerId =
+    typeof session.customer === "string"
+      ? session.customer
+      : session.customer?.id ?? null;
 
-    try {
-      const supabase = supabaseAdmin();
-      const { error } = await supabase.from("entries").insert({
-        raffle_id: raffleId,
-        ticket_count: ticketCount,
+  if (
+    !raffleId ||
+    !Number.isFinite(ticketCount) ||
+    ticketCount < 1 ||
+    !email ||
+    !isValidSize(size)
+  ) {
+    console.warn(
+      "[stripe-webhook] Missing raffle metadata, skipping insert.",
+      JSON.stringify({
+        raffleId,
+        ticketCount,
         email,
         size,
-        stripe_session_id: session.id,
-        stripe_payment_intent_id: paymentIntentId,
-        stripe_customer_id: customerId,
-      });
+      })
+    );
+    return NextResponse.json({ received: true }, { status: 200 });
+  }
 
-      if (error) {
-        console.error("[stripe-webhook] Failed to insert entry:", error.message);
-        return NextResponse.json(
-          { error: "Failed to record entry." },
-          { status: 500 }
-        );
-      }
+  try {
+    const supabase = supabaseAdmin();
+    const { error } = await supabase.from("entries").insert({
+      raffle_id: raffleId,
+      ticket_count: ticketCount,
+      size,
+      email,
+      stripe_session_id: session.id,
+      stripe_payment_intent_id: paymentIntentId,
+      stripe_customer_id: customerId,
+    });
 
-      console.log(
-        `[stripe-webhook] Recorded ${ticketCount} entries for raffle ${raffleId}`
-      );
-    } catch (dbError) {
-      const message =
-        dbError instanceof Error ? dbError.message : "Unknown database error";
-      console.error("[stripe-webhook] Database exception:", message);
+    if (error) {
+      console.error("[stripe-webhook] Failed to insert entry:", error.message);
       return NextResponse.json(
-        { error: "Database error while recording entry." },
+        { error: "Failed to record entry." },
         { status: 500 }
       );
     }
-  } else {
-    console.log(`[stripe-webhook] Ignored event type ${event.type}`);
-  }
 
-  return NextResponse.json({ received: true }, { status: 200 });
+    console.log(
+      `[stripe-webhook] Recorded ${ticketCount} entries for raffle ${raffleId}`
+    );
+    return NextResponse.json({ received: true }, { status: 200 });
+  } catch (dbError) {
+    const message =
+      dbError instanceof Error ? dbError.message : "Unknown database error.";
+    console.error("[stripe-webhook] Database exception:", message);
+    return NextResponse.json(
+      { error: "Database error while recording entry." },
+      { status: 500 }
+    );
+  }
 }
