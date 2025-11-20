@@ -1,65 +1,306 @@
-import Image from "next/image";
+/* eslint-disable @next/next/no-img-element */
 
-export default function Home() {
+import Link from "next/link";
+import CountdownTimer from "@/components/CountdownTimer";
+import EnterDrawTrigger from "@/components/EnterDrawTrigger";
+import LatestWinnerCard from "@/components/LatestWinnerCard";
+import NewsletterForm from "@/components/NewsletterForm";
+import RaffleGrid from "@/components/RaffleGrid";
+import RaffleHero from "@/components/RaffleHero";
+import RaffleTeaserLocked from "@/components/RaffleTeaserLocked";
+import { createSupabaseServerClient } from "@/lib/supabaseClient";
+
+export const revalidate = 0;
+
+type RaffleRecord = {
+  id: string;
+  title: string;
+  description: string;
+  image_url: string | null;
+  image_urls: string[] | null;
+  ticket_price_cents: number;
+  closes_at: string | null;
+  status: string;
+  max_tickets: number | null;
+  slug?: string | null;
+  sort_priority: number | null;
+};
+
+type EntriesRow = {
+  raffle_id: string;
+};
+
+type HighlightRaffle = {
+  id: string;
+  title: string;
+  image_url: string | null;
+  image_urls: string[] | null;
+  closes_at: string | null;
+  winner_email: string | null;
+};
+
+const priceFormatter = new Intl.NumberFormat("en-GB", {
+  style: "currency",
+  currency: "GBP",
+});
+
+export default async function HomePage() {
+  const supabase = await createSupabaseServerClient();
+
+  const {
+    data: activeRaffles,
+    error: activeError,
+  } = await supabase
+    .from("raffles")
+    .select(
+      "id,title,description,image_url,image_urls,ticket_price_cents,closes_at,status,max_tickets,slug,sort_priority"
+    )
+    .eq("status", "active")
+    .order("sort_priority", { ascending: true, nullsFirst: true })
+    .order("closes_at", { ascending: true, nullsFirst: false })
+    .returns<RaffleRecord[]>();
+
+  if (activeError) {
+    console.error("[homepage] Failed to fetch raffles:", activeError.message);
+  }
+
+  if (!activeRaffles || activeRaffles.length === 0) {
+    return (
+      <section className="flex min-h-[60vh] items-center justify-center text-center rounded-[32px] border border-white/10 bg-white/5/20 px-8 py-24">
+        <p className="text-base uppercase tracking-[0.5em] text-muted">
+          No active drop right now. Follow @luciansaint for the next one.
+        </p>
+      </section>
+    );
+  }
+
+  const heroRaffle = activeRaffles[0];
+  const additionalActive = activeRaffles.slice(1);
+
+  const activeIds = activeRaffles.map((raffle) => raffle.id);
+  const entriesCountMap = new Map<string, number>();
+
+  if (activeIds.length > 0) {
+    const { data: entriesRows, error: entriesError } = await supabase
+      .from("entries")
+      .select("raffle_id")
+      .in("raffle_id", activeIds)
+      .returns<EntriesRow[]>();
+
+    if (entriesError) {
+      console.error("[homepage] Failed to fetch entries counts:", entriesError.message);
+    }
+
+    entriesRows?.forEach((row) => {
+      entriesCountMap.set(row.raffle_id, (entriesCountMap.get(row.raffle_id) ?? 0) + 1);
+    });
+  }
+
+  const { count: heroEntries = 0, error: heroEntriesError } = await supabase
+    .from("entries")
+    .select("id", { count: "exact", head: true })
+    .eq("raffle_id", heroRaffle.id);
+
+  if (heroEntriesError) {
+    console.error("[homepage] Failed to count hero entries:", heroEntriesError.message);
+  }
+
+  const { data: nextDrop } = await supabase
+    .from("raffles")
+    .select("id,title,image_url,image_urls,closes_at,status")
+    .eq("status", "upcoming")
+    .order("closes_at", { ascending: true })
+    .limit(1)
+    .maybeSingle<HighlightRaffle>();
+
+  const { data: latestWinner } = await supabase
+    .from("raffles")
+    .select("id,title,image_url,image_urls,closes_at,winner_email,status")
+    .eq("status", "closed")
+    .order("closes_at", { ascending: false })
+    .limit(1)
+    .maybeSingle<HighlightRaffle>();
+
+  let pastDrops: Array<{
+    id: string;
+    title: string;
+    image_url: string | null;
+    image_urls: string[] | null;
+    closes_at: string | null;
+    slug?: string | null;
+  }> = [];
+
+  if (latestWinner?.id) {
+    const { data: past } = await supabase
+      .from("raffles")
+      .select("id,title,image_url,image_urls,closes_at,slug")
+      .eq("status", "closed")
+      .neq("id", latestWinner.id)
+      .order("closes_at", { ascending: false })
+      .limit(6);
+    pastDrops = past ?? [];
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="space-y-16">
+      <RaffleHero
+        raffleId={heroRaffle.id}
+        title={heroRaffle.title}
+        description={heroRaffle.description}
+        imageUrl={heroRaffle.image_url ?? ""}
+        imageUrls={heroRaffle.image_urls ?? undefined}
+        ticketPriceCents={heroRaffle.ticket_price_cents}
+        closesAt={heroRaffle.closes_at ?? undefined}
+        entriesCount={heroEntries ?? 0}
+        enterEnabled={heroRaffle.status === "active"}
+        detailHref={
+          heroRaffle.slug ? `/raffles/${heroRaffle.slug}` : `/raffles/${heroRaffle.id}`
+        }
+      />
+
+      {nextDrop && (
+        <RaffleTeaserLocked
+          title={nextDrop.title}
+          imageUrl={nextDrop.image_url}
+          closesAt={nextDrop.closes_at ?? undefined}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+      )}
+
+      {additionalActive.length > 0 && (
+        <section className="grid gap-6 md:grid-cols-2">
+          {additionalActive.map((raffle) => {
+            const detailHref = raffle.slug
+              ? `/raffles/${raffle.slug}`
+              : `/raffles/${raffle.id}`;
+
+            return (
+              <article
+                key={raffle.id}
+                className="rounded-2xl border border-neutral-800 bg-[#050505] p-6 transition hover:border-white"
+              >
+                <Link
+                  href={detailHref}
+                  className="flex flex-col gap-5"
+                >
+                  <div className="rounded-xl border border-neutral-800">
+                    <img
+                      src={
+                        raffle.image_urls?.[0] ??
+                        raffle.image_url ??
+                        "/placeholder.jpg"
+                      }
+                      alt={raffle.title}
+                      className="w-full rounded-xl object-cover"
+                      style={{ aspectRatio: "1 / 1" }}
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <p className="text-xs uppercase text-white/60">
+                      Closes{" "}
+                      {raffle.closes_at
+                        ? new Date(raffle.closes_at).toLocaleDateString("en-GB", {
+                            day: "numeric",
+                            month: "short",
+                          })
+                        : "TBA"}
+                    </p>
+                    <div className="flex flex-wrap items-end justify-between gap-4">
+                      <h3 className="text-2xl font-semibold text-white">
+                        {raffle.title}
+                      </h3>
+                      <div className="flex flex-wrap items-center gap-4 text-right">
+                        <div>
+                          <p className="text-xs uppercase text-white/50">Ticket</p>
+                          <p className="text-lg font-semibold text-white">
+                            {priceFormatter.format(raffle.ticket_price_cents / 100)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs uppercase text-white/50">Entries</p>
+                          <p className="text-lg font-semibold text-white">
+                            {(entriesCountMap.get(raffle.id) ?? 0).toLocaleString("en-GB")}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-[#020202] px-5 py-4">
+                    <p className="text-xs uppercase text-white/60">Countdown</p>
+                    {raffle.closes_at ? (
+                      <CountdownTimer
+                        targetDate={raffle.closes_at}
+                        variant="compact"
+                        className="justify-center text-white"
+                      />
+                    ) : (
+                      <p className="text-base text-white">Closing date TBA</p>
+                    )}
+                  </div>
+                </Link>
+                <div className="mt-4 flex flex-col gap-3">
+                  <Link
+                    href={detailHref}
+                    className="inline-flex w-full items-center justify-center rounded-full border border-white/40 px-6 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white transition hover:border-white"
+                  >
+                    View details
+                  </Link>
+                  {raffle.status === "active" ? (
+                    <EnterDrawTrigger
+                      raffleId={raffle.id}
+                      title={raffle.title}
+                      ticketPriceCents={raffle.ticket_price_cents}
+                      buttonLabel="Enter draw"
+                      buttonClassName="inline-flex w-full items-center justify-center rounded-full border border-white/30 bg-white px-6 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-black transition hover:opacity-90"
+                    />
+                  ) : (
+                    <div className="inline-flex w-full items-center justify-center rounded-full border border-white/20 px-6 py-2 text-xs uppercase tracking-[0.2em] text-white/70">
+                      Entries closed
+                    </div>
+                  )}
+                </div>
+              </article>
+            );
+          })}
+        </section>
+      )}
+
+      {latestWinner && (
+        <LatestWinnerCard
+          title={latestWinner.title}
+          imageUrl={latestWinner.image_urls?.[0] ?? latestWinner.image_url}
+          closesAt={latestWinner.closes_at ?? undefined}
+          winnerEmail={latestWinner.winner_email ?? undefined}
+        />
+      )}
+
+      {pastDrops.length > 0 && (
+        <section className="space-y-4 rounded-2xl border border-neutral-800 bg-[#0b0b0b] p-6">
+          <div className="flex flex-col gap-2">
+            <p className="text-xs uppercase text-white/60">Past drops</p>
+            <h2 className="text-2xl font-semibold text-white">
+              Archive of crowned winners
+            </h2>
+          </div>
+          <RaffleGrid
+            items={pastDrops.map((drop) => ({
+              ...drop,
+              image_url: drop.image_urls?.[0] ?? drop.image_url,
+            }))}
+          />
+        </section>
+      )}
+
+      <section className="space-y-4 rounded-2xl border border-neutral-800 bg-[#0b0b0b] p-6 text-center">
+        <div className="space-y-2">
+          <p className="text-xs uppercase text-white/60">Stay in the circle</p>
+          <h2 className="text-2xl font-semibold text-white">
+            Get first access to new drops before they go public.
+          </h2>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <div className="mx-auto max-w-2xl">
+          <NewsletterForm showHeading={false} />
         </div>
-      </main>
+      </section>
     </div>
   );
 }
