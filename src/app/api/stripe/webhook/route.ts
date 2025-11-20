@@ -5,11 +5,13 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export const runtime = "nodejs";
 
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET ?? "";
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 if (!webhookSecret) {
   throw new Error("Missing STRIPE_WEBHOOK_SECRET environment variable.");
 }
+
+const resolvedWebhookSecret: string = webhookSecret;
 
 const ALLOWED_SIZES = ["S", "M", "L", "XL"] as const;
 type SizeOption = (typeof ALLOWED_SIZES)[number];
@@ -28,7 +30,11 @@ export async function POST(request: Request) {
   let event: Stripe.Event;
 
   try {
-    event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
+    event = stripe.webhooks.constructEvent(
+      rawBody,
+      signature,
+      resolvedWebhookSecret
+    );
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Unable to verify signature.";
