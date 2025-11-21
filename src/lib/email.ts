@@ -21,117 +21,141 @@ type SendOrderConfirmationEmailParams = {
 const resend = new Resend(process.env.RESEND_API_KEY!);
 
 const template = `
-<!DOCTYPE html> <html lang="en" style="margin:0;padding:0;background:#0d0d0d;"> <head> <meta charset="UTF-8" /> <meta name="viewport" content="width=device-width, initial-scale=1.0" /> <title>You're Entered</title> </head> <body style="margin:0;padding:0;background:#0d0d0d;color:#ffffff;font-family:Arial,Helvetica,sans-serif;">
-<table width="100%" border="0" cellspacing="0" cellpadding="0" bgcolor="#0d0d0d" style="padding: 40px 0;">
-  <tr>
-    <td align="center">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Entry Confirmed</title>
+</head>
+<body style="margin:0; padding:0; background:#ffffff; font-family:Arial, Helvetica, sans-serif;">
 
-      <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 480px;background:#111111;border-radius:12px;padding:0 20px 30px;">
+  <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background:#ffffff; padding:30px 0;">
+    <tr>
+      <td align="center">
 
-        <tr>
-          <td align="center" style="padding: 40px 0 10px;">
-            <h1 style="margin:0;font-size:28px;font-weight:700;color:#ffffff;letter-spacing:1px;">
-              You're Entered 🎉
-            </h1>
-          </td>
-        </tr>
+        <!-- Outer container -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px; background:#ffffff; border-collapse:collapse;">
 
-        <tr>
-          <td align="center" style="padding-bottom: 28px;">
-            <p style="margin:0;font-size:15px;color:#cccccc;line-height:22px;">
-              Thank you for entering the raffle.<br />
-              Your entry has been successfully confirmed.
-            </p>
-          </td>
-        </tr>
+          <!-- BRAND HEADER -->
+          <tr>
+            <td style="padding:0 0 20px 0; text-align:center;">
+              <div style="font-size:26px; font-weight:800; letter-spacing:1px; color:#000000;">
+                SAINT ARCHIVE
+              </div>
+            </td>
+          </tr>
 
-        <tr>
-          <td>
-            <img src="{{raffleImage}}" alt="Raffle Item" width="100%" style="border-radius:10px;margin-bottom:20px;" />
-          </td>
-        </tr>
+          <!-- MAIN TITLE -->
+          <tr>
+            <td style="padding:0 0 10px 0; text-align:center;">
+              <div style="font-size:22px; font-weight:700; color:#000000;">
+                Entry Confirmed
+              </div>
+            </td>
+          </tr>
 
-        <tr>
-          <td>
-            <table width="100%" cellspacing="0" cellpadding="0" style="background:#1a1a1a;padding:20px;border-radius:10px;">
-              
-              <tr>
-                <td style="color:#999999;font-size:13px;padding-bottom:4px;">Item</td>
-              </tr>
-              <tr>
-                <td style="color:#ffffff;font-size:16px;padding-bottom:16px;font-weight:600;">
-                  {{raffleTitle}}
-                </td>
-              </tr>
+          <!-- SUBTITLE -->
+          <tr>
+            <td style="padding:0 0 25px 0; text-align:center;">
+              <div style="font-size:15px; color:#333333;">
+                You're officially entered into the raffle.
+              </div>
+            </td>
+          </tr>
 
-              <tr>
-                <td style="color:#999999;font-size:13px;padding-bottom:4px;">Entries Purchased</td>
-              </tr>
-              <tr>
-                <td style="color:#ffffff;font-size:16px;padding-bottom:16px;font-weight:600;">
-                  {{ticketCount}}
-                </td>
-              </tr>
+          <!-- RAFFLE IMAGE -->
+          <tr>
+            <td>
+              <img 
+                src="{{raffleImage}}" 
+                alt="Raffle Item" 
+                width="100%" 
+                style="border-radius:12px; display:block; margin-bottom:25px;" 
+              />
+            </td>
+          </tr>
 
-              <tr>
-                <td style="color:#999999;font-size:13px;padding-bottom:4px;">Selected Size</td>
-              </tr>
-              <tr>
-                <td style="color:#ffffff;font-size:16px;padding-bottom:16px;font-weight:600;">
-                  {{size}}
-                </td>
-              </tr>
+          <!-- INFO CARD -->
+          <tr>
+            <td style="padding:0;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e5e5; border-radius:12px; padding:20px;">
+                
+                <tr>
+                  <td style="font-size:18px; font-weight:700; color:#000; padding-bottom:10px;">
+                    {{raffleTitle}}
+                  </td>
+                </tr>
 
-              <tr>
-                <td style="color:#999999;font-size:13px;padding-bottom:4px;">Shipping To</td>
-              </tr>
-              <tr>
-                <td style="color:#ffffff;font-size:15px;padding-bottom:12px;line-height:22px;font-weight:500;">
-                  {{shipping_name}}<br />
-                  {{shipping_address}}<br />
-                  {{shipping_city}}, {{shipping_postcode}}<br />
-                  {{shipping_country}}
-                </td>
-              </tr>
+                <tr>
+                  <td style="font-size:15px; color:#000; padding-bottom:6px;">
+                    <strong>Entries:</strong> {{ticketCount}}
+                  </td>
+                </tr>
 
-            </table>
-          </td>
-        </tr>
+                <tr>
+                  <td style="font-size:15px; color:#000; padding-bottom:6px;">
+                    <strong>Size:</strong> {{size}}
+                  </td>
+                </tr>
 
-        <tr>
-          <td align="center" style="padding: 32px 0;">
-            <a href="{{raffleLink}}" target="_blank"
-              style="
-                display:inline-block;
-                padding:14px 26px;
-                background:#e63946;
-                color:#ffffff;
-                border-radius:8px;
-                text-decoration:none;
-                font-size:15px;
-                font-weight:600;
-                letter-spacing:0.5px;
-              ">
-              View Raffle Status
-            </a>
-          </td>
-        </tr>
+                <!-- SHIPPING DETAILS -->
+                <tr>
+                  <td style="font-size:15px; color:#000; padding-top:12px; padding-bottom:4px; font-weight:700;">
+                    Shipping Details
+                  </td>
+                </tr>
 
-        <tr>
-          <td align="center" style="padding-top:10px;">
-            <p style="margin:0;font-size:12px;color:#666666;line-height:18px;">
-              Saint Archive © {{year}}<br />
-              You are receiving this email because you entered a raffle.
-            </p>
-          </td>
-        </tr>
+                <tr>
+                  <td style="font-size:14px; color:#333;">
+                    {{shipping_name}}<br/>
+                    {{shipping_address}}<br/>
+                    {{shipping_city}}, {{shipping_postcode}}<br/>
+                    {{shipping_country}}
+                  </td>
+                </tr>
 
-      </table>
+              </table>
+            </td>
+          </tr>
 
-    </td>
-  </tr>
-</table>
-</body> </html> `;
+          <!-- BUTTON -->
+          <tr>
+            <td style="padding:30px 0 20px 0; text-align:center;">
+              <a 
+                href="{{raffleLink}}" 
+                style="
+                  background:#e50914;
+                  padding:14px 26px;
+                  border-radius:8px;
+                  color:#ffffff;
+                  text-decoration:none;
+                  font-size:15px;
+                  font-weight:700;
+                  letter-spacing:0.5px;
+                  display:inline-block;
+                "
+              >View Your Entry</a>
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td style="text-align:center; padding-top:20px; font-size:12px; color:#999;">
+              © {{year}} Saint Archive. All rights reserved.
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
+`;
 
 export async function sendOrderConfirmationEmail({
   email,
@@ -151,10 +175,10 @@ export async function sendOrderConfirmationEmail({
   const raffleLink = `${baseUrl}/raffles/${raffleId}`;
 
   const html = template
-    .replace(/{{raffleTitle}}/g, raffleTitle)
-    .replace(/{{ticketCount}}/g, String(ticketCount))
-    .replace(/{{size}}/g, size)
     .replace(/{{raffleImage}}/g, raffleImage || "")
+    .replace(/{{raffleTitle}}/g, raffleTitle || "")
+    .replace(/{{ticketCount}}/g, String(ticketCount || ""))
+    .replace(/{{size}}/g, size || "")
     .replace(/{{shipping_name}}/g, shippingDetails.name || "")
     .replace(/{{shipping_address}}/g, shippingDetails.address || "")
     .replace(/{{shipping_city}}/g, shippingDetails.city || "")
