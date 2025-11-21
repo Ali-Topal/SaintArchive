@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { sendOrderConfirmationEmail } from "@/lib/email";
 
 export const runtime = "nodejs";
 
@@ -52,6 +53,7 @@ export async function POST(request: Request) {
   const ticketCountRaw = session.metadata?.ticketCount ?? null;
   const ticketCount = ticketCountRaw ? Number(ticketCountRaw) : NaN;
   const size = session.metadata?.size?.toUpperCase() ?? null;
+  const raffleTitle = session.metadata?.raffleTitle ?? "Your raffle";
   const email =
     session.metadata?.email ??
     session.customer_details?.email ??
@@ -85,6 +87,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ received: true }, { status: 200 });
   }
 
+  const shipping = (session as Stripe.Checkout.Session & {
+    shipping_details?: Stripe.Checkout.Session.ShippingDetails | null;
+  }).shipping_details;
+  const shippingDetails = {
+    name: shipping?.name || "",
+    address: shipping?.address?.line1 || "",
+    city: shipping?.address?.city || "",
+    postcode: shipping?.address?.postal_code || "",
+    country: shipping?.address?.country || "",
+  };
+
   try {
     const supabase = supabaseAdmin();
     const { error } = await supabase.from("entries").insert({
@@ -92,6 +105,11 @@ export async function POST(request: Request) {
       ticket_count: ticketCount,
       size,
       email,
+      shipping_name: shippingDetails.name || null,
+      shipping_address: shippingDetails.address || null,
+      shipping_city: shippingDetails.city || null,
+      shipping_postcode: shippingDetails.postcode || null,
+      shipping_country: shippingDetails.country || null,
       stripe_session_id: session.id,
       stripe_payment_intent_id: paymentIntentId,
       stripe_customer_id: customerId,
@@ -105,9 +123,23 @@ export async function POST(request: Request) {
       );
     }
 
+    try {
+      await sendOrderConfirmationEmail({
+        email,
+        raffleTitle,
+        raffleId,
+        ticketCount,
+        size,
+        shippingDetails,
+      });
+    } catch (emailError) {
+      console.error("[stripe-webhook] Email send failed:", emailError);
+    }
+
     console.log(
       `[stripe-webhook] Recorded ${ticketCount} entries for raffle ${raffleId}`
     );
+
     return NextResponse.json({ received: true }, { status: 200 });
   } catch (dbError) {
     const message =

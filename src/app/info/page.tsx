@@ -8,8 +8,8 @@ const steps = [
     description: "Browse the curated vault piece, study the details, and check the close date.",
   },
   {
-    title: "Enter from £0",
-    description: "Choose one of our free raffles or enter a paid one through our encrypted Stripe Checkout.",
+    title: "Enter from £0.50",
+    description: "Enterthrough our encrypted Stripe Checkout.",
   },
   {
     title: "Live draw & winner",

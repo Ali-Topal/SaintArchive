@@ -75,8 +75,24 @@ export default async function HomePage() {
     );
   }
 
+  const now = new Date();
+  const isRaffleOpen = (raffle: RaffleRecord) => {
+    if (raffle.status !== "active") {
+      return false;
+    }
+    if (!raffle.closes_at) {
+      return true;
+    }
+    const closeDate = new Date(raffle.closes_at);
+    if (Number.isNaN(closeDate.valueOf())) {
+      return true;
+    }
+    return closeDate > now;
+  };
+
   const heroRaffle = activeRaffles[0];
   const additionalActive = activeRaffles.slice(1);
+  const heroIsOpen = isRaffleOpen(heroRaffle);
 
   const activeIds = activeRaffles.map((raffle) => raffle.id);
   const entriesCountMap = new Map<string, number>();
@@ -153,7 +169,7 @@ export default async function HomePage() {
         ticketPriceCents={heroRaffle.ticket_price_cents}
         closesAt={heroRaffle.closes_at ?? undefined}
         entriesCount={heroEntries ?? 0}
-        enterEnabled={heroRaffle.status === "active"}
+        enterEnabled={heroIsOpen}
         maxEntriesPerUser={heroRaffle.max_entries_per_user ?? undefined}
         detailHref={
           heroRaffle.slug ? `/raffles/${heroRaffle.slug}` : `/raffles/${heroRaffle.id}`
@@ -246,7 +262,7 @@ export default async function HomePage() {
                   >
                     View details
                   </Link>
-                  {raffle.status === "active" ? (
+                  {isRaffleOpen(raffle) ? (
                     <EnterDrawTrigger
                       raffleId={raffle.id}
                       title={raffle.title}

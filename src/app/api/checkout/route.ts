@@ -19,6 +19,7 @@ type RaffleRow = {
   id: string;
   title: string;
   status: string;
+  closes_at: string | null;
   ticket_price_cents: number;
   max_entries_per_user: number | null;
 };
@@ -78,7 +79,7 @@ export async function POST(request: Request) {
     error: raffleError,
   } = await supabase
     .from("raffles")
-    .select("id,title,status,ticket_price_cents,max_entries_per_user")
+    .select("id,title,status,closes_at,ticket_price_cents,max_entries_per_user")
     .eq("id", raffleId)
     .single<RaffleRow>();
 
@@ -104,6 +105,17 @@ export async function POST(request: Request) {
     );
   }
 
+  const now = new Date();
+  if (raffle.closes_at) {
+    const closeDate = new Date(raffle.closes_at);
+    if (!Number.isNaN(closeDate.valueOf()) && closeDate <= now) {
+      return NextResponse.json(
+        { error: "This draw is closed." },
+        { status: 400 }
+      );
+    }
+  }
+
   const perUserLimit = raffle.max_entries_per_user ?? null;
   if (perUserLimit && ticketCount > perUserLimit) {
     return NextResponse.json(
@@ -116,6 +128,18 @@ export async function POST(request: Request) {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       customer_email: email,
+      shipping_address_collection: {
+        allowed_countries: ["GB"],
+      },
+      shipping_options: [
+        {
+          shipping_rate_data: {
+            type: "fixed_amount",
+            fixed_amount: { amount: 0, currency: "gbp" },
+            display_name: "Free Shipping",
+          },
+        },
+      ],
       line_items: [
         {
           price_data: {
@@ -133,6 +157,7 @@ export async function POST(request: Request) {
         ticketCount: String(ticketCount),
         email,
         size,
+        raffleTitle: raffle.title,
       },
       success_url: `${baseUrl}/thank-you?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/raffles/${raffleId}`,

@@ -80,8 +80,12 @@ export default async function RaffleDetailPage({ params }: PageProps) {
     style: "currency",
     currency: "GBP",
   });
-  const isClosed = raffle.status === "closed";
+  const now = new Date();
   const closesAt = raffle.closes_at ?? undefined;
+  const closesDate = closesAt ? new Date(closesAt) : null;
+  const isClosed =
+    raffle.status === "closed" ||
+    (closesDate && !Number.isNaN(closesDate.valueOf()) && closesDate <= now);
   const closesDisplay = closesAt
     ? new Date(closesAt).toLocaleString("en-GB", {
         weekday: "short",
