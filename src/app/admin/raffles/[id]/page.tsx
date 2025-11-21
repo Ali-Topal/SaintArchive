@@ -1,7 +1,9 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import ImageUploaderList from "@/components/ImageUploaderField";
+import Toast from "@/components/Toast";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 type PageProps = {
@@ -126,6 +128,14 @@ async function updateRaffleAction(formData: FormData) {
   if (slug) {
     revalidatePath(`/raffles/${slug}`);
   }
+  const cookieStore = await cookies();
+  cookieStore.set({
+    name: "admin-toast",
+    value: "saved",
+    path: `/admin/raffles/${raffleId}`,
+    maxAge: 10,
+  });
+  redirect(`/admin/raffles/${raffleId}`);
 }
 
 async function updateWinnerAction(formData: FormData) {
@@ -261,6 +271,9 @@ async function removeEntryAction(formData: FormData) {
 export default async function ManageRafflePage({ params }: PageProps) {
   const { id } = await params;
   const supabase = supabaseAdmin();
+  const cookieStore = await cookies();
+  const toastCookie = cookieStore.get("admin-toast");
+  const showSuccessToast = toastCookie?.value === "saved";
 
   const { data: raffle, error } = await supabase
     .from("raffles")
@@ -298,7 +311,11 @@ export default async function ManageRafflePage({ params }: PageProps) {
     .order("created_at", { ascending: false });
 
   return (
-    <section className="space-y-10 py-16">
+    <>
+      {showSuccessToast && (
+        <Toast message="Changes saved" cookiePath={`/admin/raffles/${raffle.id}`} />
+      )}
+      <section className="space-y-10 py-16">
       <div className="flex flex-col gap-2">
         <Link
           href="/admin"
@@ -396,7 +413,7 @@ export default async function ManageRafflePage({ params }: PageProps) {
               }
             />
         </div>
-        <label className="space-y-2 text-sm">
+          <label className="space-y-2 text-sm block pb-4">
             <span className="text-muted uppercase tracking-[0.3em]">
               Status
             </span>
@@ -426,7 +443,7 @@ export default async function ManageRafflePage({ params }: PageProps) {
           </label>
           <label className="space-y-2 text-sm">
             <span className="text-muted uppercase tracking-[0.3em]">
-              Max entries per user
+              Max entries p/user
             </span>
             <input
               type="number"
@@ -475,7 +492,7 @@ export default async function ManageRafflePage({ params }: PageProps) {
 
         <button
           type="submit"
-          className="inline-flex items-center justify-center rounded-full bg-accent px-8 py-3 text-sm font-semibold uppercase tracking-[0.3em] text-background transition hover:opacity-90"
+          className="inline-flex items-center justify-center rounded-full border border-transparent bg-accent px-8 py-3 text-sm font-semibold uppercase tracking-[0.3em] text-background transition duration-200 hover:border-white/30 hover:shadow-[0_0_20px_rgba(255,255,255,0.15)] active:scale-95"
         >
           Save changes
         </button>
@@ -494,14 +511,14 @@ export default async function ManageRafflePage({ params }: PageProps) {
             name="winner_email"
             type="email"
             defaultValue={raffle.winner_email ?? ""}
-            placeholder="leave blank to clear"
+            placeholder="email / leave blank to clear"
             className="flex-1 rounded-2xl border border-white/15 bg-transparent px-4 py-3 text-foreground focus:border-accent focus:outline-none"
           />
           <input
             name="winner_instagram_handle"
             type="text"
             defaultValue={raffle.winner_instagram_handle ?? ""}
-            placeholder="@winner"
+            placeholder="Winner Instagram @"
             className="flex-1 rounded-2xl border border-white/15 bg-transparent px-4 py-3 text-foreground focus:border-accent focus:outline-none"
           />
         </div>
@@ -541,7 +558,7 @@ export default async function ManageRafflePage({ params }: PageProps) {
                   </label>
                   <label className="space-y-2 text-sm">
                     <span className="text-muted uppercase tracking-[0.3em]">
-                      Instagram handle
+                      Instagram
                     </span>
                     <input
                       type="text"
@@ -632,7 +649,8 @@ export default async function ManageRafflePage({ params }: PageProps) {
           </p>
         )}
       </div>
-    </section>
+      </section>
+    </>
   );
 }
 

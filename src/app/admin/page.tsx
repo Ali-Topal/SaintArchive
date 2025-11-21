@@ -114,7 +114,7 @@ export default async function AdminPage() {
                   type="submit"
                   name="status"
                   value="draft"
-                  className="rounded-full border border-white/20 px-4 py-2 text-xs uppercase tracking-[0.3em] text-muted transition hover:border-white/40"
+                  className="rounded-full border border-white/20 px-4 py-2 text-xs uppercase tracking-[0.3em] text-muted transition duration-200 hover:border-white/60 hover:text-white active:scale-95"
                 >
                   Mark Draft
                 </button>
@@ -124,7 +124,7 @@ export default async function AdminPage() {
                   type="submit"
                   name="status"
                   value="active"
-                  className="rounded-full border border-accent px-4 py-2 text-xs uppercase tracking-[0.3em] text-accent transition hover:bg-accent/10"
+                  className="rounded-full border border-accent px-4 py-2 text-xs uppercase tracking-[0.3em] text-accent transition duration-200 hover:bg-accent/10 active:scale-95"
                 >
                   Set Active
                 </button>
@@ -134,7 +134,7 @@ export default async function AdminPage() {
                   type="submit"
                   name="status"
                   value="closed"
-                  className="rounded-full border border-white/20 px-4 py-2 text-xs uppercase tracking-[0.3em] text-muted transition hover:border-white/40"
+                  className="rounded-full border border-white/20 px-4 py-2 text-xs uppercase tracking-[0.3em] text-muted transition duration-200 hover:border-white/60 hover:text-white active:scale-95"
                 >
                   Close Raffle
                 </button>

@@ -254,7 +254,7 @@ export default async function NewRafflePage() {
 
         <button
           type="submit"
-          className="inline-flex items-center justify-center rounded-full bg-accent px-8 py-3 text-sm font-semibold uppercase tracking-[0.3em] text-background transition hover:opacity-90"
+          className="inline-flex items-center justify-center rounded-full border border-transparent bg-accent px-8 py-3 text-sm font-semibold uppercase tracking-[0.3em] text-background transition duration-200 hover:border-white/30 hover:shadow-[0_0_20px_rgba(255,255,255,0.15)] active:scale-95"
         >
           Create raffle
         </button>
