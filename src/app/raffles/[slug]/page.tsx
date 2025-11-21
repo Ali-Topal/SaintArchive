@@ -11,12 +11,14 @@ type RaffleBySlug = {
   id: string;
   title: string;
   description: string;
+  brand: string | null;
   image_url: string | null;
   image_urls: string[] | null;
   ticket_price_cents: number;
   closes_at: string | null;
   status: string;
   winner_email: string | null;
+  winner_instagram_handle: string | null;
   max_entries_per_user: number | null;
 };
 
@@ -33,7 +35,7 @@ export default async function RaffleDetailPage({ params }: PageProps) {
   const { data: raffleBySlug, error: slugError } = await supabase
     .from("raffles")
     .select(
-      "id,title,description,image_url,image_urls,ticket_price_cents,closes_at,status,winner_email,max_entries_per_user"
+      "id,title,description,brand,image_url,image_urls,ticket_price_cents,closes_at,status,winner_email,winner_instagram_handle,max_entries_per_user"
     )
     .eq("slug", slug)
     .maybeSingle<RaffleBySlug>();
@@ -44,7 +46,7 @@ export default async function RaffleDetailPage({ params }: PageProps) {
     const { data: raffleById, error: idError } = await supabase
       .from("raffles")
       .select(
-          "id,title,description,image_url,image_urls,ticket_price_cents,closes_at,status,winner_email,max_entries_per_user"
+        "id,title,description,brand,image_url,image_urls,ticket_price_cents,closes_at,status,winner_email,winner_instagram_handle,max_entries_per_user"
       )
       .eq("id", slug)
       .maybeSingle<RaffleBySlug>();
@@ -206,10 +208,10 @@ export default async function RaffleDetailPage({ params }: PageProps) {
         <h3 className="text-sm uppercase tracking-[0.3em] text-white/60">
           Winner
         </h3>
-        {raffle.winner_email ? (
+        {raffle.winner_email || raffle.winner_instagram_handle ? (
           <div className="text-white">
             <p className="text-lg font-semibold">
-              {maskEmail(raffle.winner_email)}
+              {formatWinner(raffle.winner_instagram_handle, raffle.winner_email)}
             </p>
             <p className="text-sm text-white/60">
               Closed {closesDisplay}
@@ -231,7 +233,10 @@ export default async function RaffleDetailPage({ params }: PageProps) {
   );
 }
 
-function maskEmail(email: string | null): string {
+function formatWinner(handle: string | null, email: string | null): string {
+  if (handle) {
+    return handle.startsWith("@") ? handle : `@${handle}`;
+  }
   if (!email) return "Winner TBA";
   const [user, domain] = email.split("@");
   if (!user || !domain) return "Winner TBA";

@@ -13,6 +13,7 @@ type CheckoutBody = {
   ticketCount?: number;
   email?: string;
   size?: string;
+  instagramHandle?: string;
 };
 
 type RaffleRow = {
@@ -45,6 +46,7 @@ export async function POST(request: Request) {
   const ticketCount = Number(body.ticketCount);
   const email = body.email?.trim() ?? "";
   const size = body.size?.trim().toUpperCase() ?? "";
+  const instagramHandle = body.instagramHandle?.trim() ?? "";
 
   if (!raffleId) {
     return NextResponse.json(
@@ -70,6 +72,13 @@ export async function POST(request: Request) {
   if (!size || !isValidSize(size)) {
     return NextResponse.json(
       { error: "Valid size is required" },
+      { status: 400 }
+    );
+  }
+
+  if (!instagramHandle) {
+    return NextResponse.json(
+      { error: "Instagram handle is required" },
       { status: 400 }
     );
   }
@@ -167,6 +176,7 @@ export async function POST(request: Request) {
         size,
         raffleTitle: raffle.title,
         raffleImage: displayImage ?? "",
+        instagramHandle,
       },
       success_url: `${baseUrl}/thank-you?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/raffles/${raffleId}`,

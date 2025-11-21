@@ -40,6 +40,7 @@ async function updateRaffleAction(formData: FormData) {
 
   const payload = {
     title: formData.get("title")?.toString().trim() ?? "",
+    brand: formData.get("brand")?.toString().trim() ?? "",
     description: formData.get("description")?.toString().trim() ?? "",
     image_urls: formData
       .getAll("image_urls")
@@ -114,6 +115,7 @@ async function updateRaffleAction(formData: FormData) {
     .from("raffles")
     .update({
       ...payload,
+      brand: payload.brand || null,
       slug: finalSlug,
       image_url: payload.image_urls[0] ?? null,
     })
@@ -146,10 +148,15 @@ async function updateWinnerAction(formData: FormData) {
   }
 
   const winnerEmail = formData.get("winner_email")?.toString().trim() || null;
+  const winnerInstagramHandle =
+    formData.get("winner_instagram_handle")?.toString().trim() || null;
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase
     .from("raffles")
-    .update({ winner_email: winnerEmail })
+    .update({
+      winner_email: winnerEmail,
+      winner_instagram_handle: winnerInstagramHandle,
+    })
     .eq("id", raffleId);
 
   if (error) {
@@ -169,16 +176,30 @@ async function setWinnerFromEntryAction(formData: FormData) {
   }
 
   const raffleId = formData.get("raffleId")?.toString();
-  const email = formData.get("email")?.toString();
+  const entryId = formData.get("entryId")?.toString();
 
-  if (!raffleId || !email) {
+  if (!raffleId || !entryId) {
     throw new Error("Missing data");
   }
 
   const supabase = await createSupabaseServerClient();
+
+  const { data: entry, error: entryError } = await supabase
+    .from("entries")
+    .select("email,instagram_handle")
+    .eq("id", entryId)
+    .maybeSingle();
+
+  if (entryError || !entry) {
+    throw new Error(entryError?.message ?? "Entry not found.");
+  }
+
   const { error } = await supabase
     .from("raffles")
-    .update({ winner_email: email })
+    .update({
+      winner_email: entry.email,
+      winner_instagram_handle: entry.instagram_handle ?? null,
+    })
     .eq("id", raffleId);
 
   if (error) {
@@ -200,11 +221,18 @@ async function addManualEntryAction(formData: FormData) {
   const raffleId = formData.get("raffleId")?.toString();
   const raffleSlug = formData.get("raffleSlug")?.toString();
   const email = formData.get("email")?.toString().trim().toLowerCase();
+  const instagramHandle = formData.get("instagram_handle")?.toString().trim();
   const ticketCountValue = formData.get("ticket_count")?.toString();
   const ticketCount = ticketCountValue ? Number(ticketCountValue) : NaN;
 
-  if (!raffleId || !email || !Number.isFinite(ticketCount) || ticketCount < 1) {
-    throw new Error("Email and ticket count are required.");
+  if (
+    !raffleId ||
+    !email ||
+    !Number.isFinite(ticketCount) ||
+    ticketCount < 1 ||
+    !instagramHandle
+  ) {
+    throw new Error("Email, Instagram handle, and ticket count are required.");
   }
 
   const supabase = await createSupabaseServerClient();
@@ -212,6 +240,7 @@ async function addManualEntryAction(formData: FormData) {
     raffle_id: raffleId,
     email,
     ticket_count: ticketCount,
+    instagram_handle: instagramHandle,
     stripe_session_id: `manual-${Date.now()}`,
     stripe_customer_id: null,
     stripe_payment_intent_id: null,
@@ -277,7 +306,7 @@ export default async function ManageRafflePage({
   const { data: raffle, error } = await supabase
     .from("raffles")
     .select(
-      "id,title,slug,description,image_url,image_urls,ticket_price_cents,max_entries_per_user,max_tickets,closes_at,status,winner_email,sort_priority"
+      "id,title,slug,brand,description,image_url,image_urls,ticket_price_cents,max_entries_per_user,max_tickets,closes_at,status,winner_email,winner_instagram_handle,sort_priority"
     )
     .eq("id", id)
     .maybeSingle();
@@ -340,6 +369,18 @@ export default async function ManageRafflePage({
               defaultValue={raffle.slug}
               required
               className="w-full rounded-2xl border border-white/15 bg-transparent px-4 py-3 text-foreground focus:border-accent focus:outline-none"
+            />
+          </label>
+
+          <label className="space-y-2 text-sm md:col-span-2">
+            <span className="text-muted uppercase tracking-[0.3em]">
+              Brand
+            </span>
+            <input
+              name="brand"
+              defaultValue={raffle.brand ?? ""}
+              className="w-full rounded-2xl border border-white/15 bg-transparent px-4 py-3 text-foreground focus:border-accent focus:outline-none"
+              placeholder="e.g. Supreme"
             />
           </label>
         </div>
@@ -465,9 +506,9 @@ export default async function ManageRafflePage({
         <input type="hidden" name="adminKey" value={providedKey} />
         <input type="hidden" name="raffleId" value={raffle.id} />
         <p className="text-sm uppercase tracking-[0.4em] text-muted">
-          Winner email
+          Winner details
         </p>
-        <div className="flex flex-col gap-3 md:flex-row md:items-center">
+        <div className="grid gap-3 md:grid-cols-2">
           <input
             name="winner_email"
             type="email"
@@ -475,13 +516,20 @@ export default async function ManageRafflePage({
             placeholder="leave blank to clear"
             className="flex-1 rounded-2xl border border-white/15 bg-transparent px-4 py-3 text-foreground focus:border-accent focus:outline-none"
           />
-          <button
-            type="submit"
-            className="rounded-full border border-white/20 px-6 py-3 text-xs uppercase tracking-[0.3em] text-foreground transition hover:border-white/40"
-          >
-            Save winner
-          </button>
+          <input
+            name="winner_instagram_handle"
+            type="text"
+            defaultValue={raffle.winner_instagram_handle ?? ""}
+            placeholder="@winner"
+            className="flex-1 rounded-2xl border border-white/15 bg-transparent px-4 py-3 text-foreground focus:border-accent focus:outline-none"
+          />
         </div>
+        <button
+          type="submit"
+          className="rounded-full border border-white/20 px-6 py-3 text-xs uppercase tracking-[0.3em] text-foreground transition hover:border-white/40"
+        >
+          Save winner
+        </button>
       </form>
 
       <div className="space-y-4 rounded-3xl border border-white/10 bg-white/5 p-8">
@@ -490,12 +538,12 @@ export default async function ManageRafflePage({
             Entries ({entries?.length ?? 0})
           </p>
           <p className="text-xs text-foreground/70">
-            Click “Set as winner” to assign an entry’s email.
+            Click “Set as winner” to assign this entry.
           </p>
         </div>
                 <form
                   action={addManualEntryAction}
-                  className="grid gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 md:grid-cols-[2fr_1fr_auto]"
+                  className="grid gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 md:grid-cols-[2fr_1fr_1fr_auto]"
                 >
                   <input type="hidden" name="adminKey" value={providedKey} />
                   <input type="hidden" name="raffleId" value={raffle.id} />
@@ -507,6 +555,18 @@ export default async function ManageRafflePage({
                     <input
                       type="email"
                       name="email"
+                      required
+                      className="w-full rounded-2xl border border-white/15 bg-transparent px-4 py-3 text-foreground focus:border-accent focus:outline-none"
+                    />
+                  </label>
+                  <label className="space-y-2 text-sm">
+                    <span className="text-muted uppercase tracking-[0.3em]">
+                      Instagram handle
+                    </span>
+                    <input
+                      type="text"
+                      name="instagram_handle"
+                      placeholder="@username"
                       required
                       className="w-full rounded-2xl border border-white/15 bg-transparent px-4 py-3 text-foreground focus:border-accent focus:outline-none"
                     />
@@ -541,6 +601,13 @@ export default async function ManageRafflePage({
                   <p className="font-medium text-foreground">
                     {entry.email}
                   </p>
+                      <p className="text-sm text-foreground/70">
+                        {entry.instagram_handle
+                          ? entry.instagram_handle.startsWith("@")
+                            ? entry.instagram_handle
+                            : `@${entry.instagram_handle}`
+                          : "Handle: —"}
+                      </p>
                   <p className="text-xs uppercase tracking-[0.3em] text-muted">
                     {entry.ticket_count} ticket(s) •{" "}
                     {new Date(entry.created_at).toLocaleString("en-GB", {
@@ -558,7 +625,7 @@ export default async function ManageRafflePage({
                   <form action={setWinnerFromEntryAction}>
                     <input type="hidden" name="adminKey" value={providedKey} />
                     <input type="hidden" name="raffleId" value={raffle.id} />
-                    <input type="hidden" name="email" value={entry.email} />
+                    <input type="hidden" name="entryId" value={entry.id} />
                     <button
                       type="submit"
                       className="rounded-full border border-accent px-4 py-2 text-xs uppercase tracking-[0.3em] text-accent transition hover:bg-accent/10"

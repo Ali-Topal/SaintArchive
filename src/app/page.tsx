@@ -8,6 +8,7 @@ import NewsletterForm from "@/components/NewsletterForm";
 import RaffleGrid from "@/components/RaffleGrid";
 import RaffleHero from "@/components/RaffleHero";
 import RaffleTeaserLocked from "@/components/RaffleTeaserLocked";
+import BrandFilter from "@/components/BrandFilter";
 import { createSupabaseServerClient } from "@/lib/supabaseClient";
 
 export const revalidate = 0;
@@ -23,6 +24,7 @@ type RaffleRecord = {
   status: string;
   max_tickets: number | null;
   max_entries_per_user: number | null;
+  brand: string | null;
   slug?: string | null;
   sort_priority: number | null;
 };
@@ -38,6 +40,7 @@ type HighlightRaffle = {
   image_urls: string[] | null;
   closes_at: string | null;
   winner_email: string | null;
+  winner_instagram_handle: string | null;
 };
 
 const priceFormatter = new Intl.NumberFormat("en-GB", {
@@ -45,7 +48,13 @@ const priceFormatter = new Intl.NumberFormat("en-GB", {
   currency: "GBP",
 });
 
-export default async function HomePage() {
+type HomePageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function HomePage({
+  searchParams,
+}: HomePageProps = {}) {
   const supabase = await createSupabaseServerClient();
 
   const {
@@ -54,7 +63,7 @@ export default async function HomePage() {
   } = await supabase
     .from("raffles")
     .select(
-      "id,title,description,image_url,image_urls,ticket_price_cents,closes_at,status,max_tickets,max_entries_per_user,slug,sort_priority"
+      "id,title,description,image_url,image_urls,ticket_price_cents,closes_at,status,max_tickets,max_entries_per_user,brand,slug,sort_priority"
     )
     .eq("status", "active")
     .order("sort_priority", { ascending: true, nullsFirst: true })
@@ -75,6 +84,47 @@ export default async function HomePage() {
     );
   }
 
+  const availableBrands = Array.from(
+    new Set(
+      activeRaffles
+        .map((raffle) => raffle.brand?.trim())
+        .filter((brand): brand is string => !!brand)
+    )
+  ).sort((a, b) => a.localeCompare(b));
+
+  const params =
+    searchParams !== undefined ? await searchParams : ({} as Record<string, string | string[] | undefined>);
+  const rawParam = params.brand;
+  const selectedBrandRaw = Array.isArray(rawParam)
+    ? rawParam[0]
+    : rawParam;
+  const normalizedBrand = selectedBrandRaw?.toLowerCase();
+  const filteredRaffles =
+    normalizedBrand && activeRaffles.length
+      ? activeRaffles.filter(
+          (raffle) =>
+            raffle.brand?.toLowerCase() === normalizedBrand
+        )
+      : activeRaffles;
+
+  if (!filteredRaffles || filteredRaffles.length === 0) {
+    return (
+      <div className="space-y-10">
+        <BrandFilter
+          brands={availableBrands}
+          activeBrand={selectedBrandRaw}
+        />
+        <section className="flex min-h-[40vh] items-center justify-center rounded-[32px] border border-white/10 bg-white/5/20 px-8 py-16 text-center">
+          <p className="text-base uppercase tracking-[0.4em] text-muted">
+            {selectedBrandRaw
+              ? `No active drops for ${selectedBrandRaw}`
+              : "No active drop right now. Follow @luciansaint for the next one."}
+          </p>
+        </section>
+      </div>
+    );
+  }
+
   const now = new Date();
   const isRaffleOpen = (raffle: RaffleRecord) => {
     if (raffle.status !== "active") {
@@ -90,11 +140,11 @@ export default async function HomePage() {
     return closeDate > now;
   };
 
-  const heroRaffle = activeRaffles[0];
-  const additionalActive = activeRaffles.slice(1);
+  const heroRaffle = filteredRaffles[0];
+  const additionalActive = filteredRaffles.slice(1);
   const heroIsOpen = isRaffleOpen(heroRaffle);
 
-  const activeIds = activeRaffles.map((raffle) => raffle.id);
+  const activeIds = filteredRaffles.map((raffle) => raffle.id);
   const entriesCountMap = new Map<string, number>();
 
   if (activeIds.length > 0) {
@@ -113,13 +163,17 @@ export default async function HomePage() {
     });
   }
 
-  const { count: heroEntries = 0, error: heroEntriesError } = await supabase
-    .from("entries")
-    .select("id", { count: "exact", head: true })
-    .eq("raffle_id", heroRaffle.id);
+  let heroEntries = 0;
+  if (heroRaffle) {
+    const { count = 0, error: heroEntriesError } = await supabase
+      .from("entries")
+      .select("id", { count: "exact", head: true })
+      .eq("raffle_id", heroRaffle.id);
 
-  if (heroEntriesError) {
-    console.error("[homepage] Failed to count hero entries:", heroEntriesError.message);
+    if (heroEntriesError) {
+      console.error("[homepage] Failed to count hero entries:", heroEntriesError.message);
+    }
+    heroEntries = count ?? 0;
   }
 
   const { data: nextDrop } = await supabase
@@ -132,7 +186,9 @@ export default async function HomePage() {
 
   const { data: latestWinner } = await supabase
     .from("raffles")
-    .select("id,title,image_url,image_urls,closes_at,winner_email,status")
+    .select(
+      "id,title,image_url,image_urls,closes_at,winner_email,winner_instagram_handle,status"
+    )
     .eq("status", "closed")
     .order("closes_at", { ascending: false })
     .limit(1)
@@ -160,6 +216,7 @@ export default async function HomePage() {
 
   return (
     <div className="space-y-16">
+      <BrandFilter brands={availableBrands} activeBrand={selectedBrandRaw} />
       <RaffleHero
         raffleId={heroRaffle.id}
         title={heroRaffle.title}
@@ -288,7 +345,8 @@ export default async function HomePage() {
           title={latestWinner.title}
           imageUrl={latestWinner.image_urls?.[0] ?? latestWinner.image_url}
           closesAt={latestWinner.closes_at ?? undefined}
-          winnerEmail={latestWinner.winner_email ?? undefined}
+        winnerEmail={latestWinner.winner_email ?? undefined}
+        winnerInstagramHandle={latestWinner.winner_instagram_handle ?? undefined}
         />
       )}
 

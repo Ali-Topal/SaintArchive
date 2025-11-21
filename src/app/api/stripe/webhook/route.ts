@@ -62,6 +62,7 @@ export async function POST(request: Request) {
   const size = session.metadata?.size?.toUpperCase() ?? null;
   const raffleTitle = session.metadata?.raffleTitle ?? "Your raffle";
   const raffleImage = session.metadata?.raffleImage ?? null;
+  const instagramHandle = session.metadata?.instagramHandle ?? null;
   const email =
     session.metadata?.email ??
     session.customer_details?.email ??
@@ -81,7 +82,8 @@ export async function POST(request: Request) {
     !Number.isFinite(ticketCount) ||
     ticketCount < 1 ||
     !email ||
-    !isValidSize(size)
+    !isValidSize(size) ||
+    !instagramHandle
   ) {
     console.warn(
       "[stripe-webhook] Missing raffle metadata, skipping insert.",
@@ -90,6 +92,7 @@ export async function POST(request: Request) {
         ticketCount,
         email,
         size,
+        instagramHandle,
       })
     );
     return NextResponse.json({ received: true }, { status: 200 });
@@ -111,6 +114,7 @@ export async function POST(request: Request) {
       ticket_count: ticketCount,
       size,
       email,
+      instagram_handle: instagramHandle,
       shipping_name: shippingDetails.name || null,
       shipping_address: shippingDetails.address || null,
       shipping_city: shippingDetails.city || null,

@@ -30,6 +30,7 @@ export default function EnterDrawModal({
 }: EnterDrawModalProps) {
   const [entryCount, setEntryCount] = useState(1);
   const [email, setEmail] = useState("");
+  const [instagramHandle, setInstagramHandle] = useState("");
   const [size, setSize] = useState<SizeOption | "">("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,6 +50,7 @@ export default function EnterDrawModal({
     setError(null);
     setEntryCount(1);
     setEmail("");
+    setInstagramHandle("");
     setSize("");
     onClose();
   };
@@ -63,6 +65,11 @@ export default function EnterDrawModal({
   const handleSubmit = async () => {
     if (!emailRegex.test(email.trim())) {
       setError("Enter a valid email.");
+      return;
+    }
+
+    if (!instagramHandle.trim()) {
+      setError("Enter your Instagram handle.");
       return;
     }
 
@@ -84,6 +91,7 @@ export default function EnterDrawModal({
           raffleId,
           ticketCount: entryCount,
           email: email.trim(),
+          instagramHandle: instagramHandle.trim(),
           size,
         }),
       });
@@ -172,6 +180,21 @@ export default function EnterDrawModal({
               onChange={(event) => setEmail(event.target.value)}
               className="w-full rounded-md border border-white/20 bg-transparent px-4 py-2 text-white focus:border-white focus:outline-none"
               placeholder="you@example.com"
+              disabled={isSubmitting}
+              required
+            />
+          </label>
+
+          <label className="block space-y-2">
+            <span className="text-xs uppercase tracking-[0.3em] text-white/60">
+              Instagram handle
+            </span>
+            <input
+              type="text"
+              value={instagramHandle}
+              onChange={(event) => setInstagramHandle(event.target.value)}
+              className="w-full rounded-md border border-white/20 bg-transparent px-4 py-2 text-white focus:border-white focus:outline-none"
+              placeholder="@username"
               disabled={isSubmitting}
               required
             />

@@ -4,6 +4,7 @@ type LatestWinnerCardProps = {
   imageUrl?: string | null;
   closesAt?: string | null;
   winnerEmail?: string | null;
+  winnerInstagramHandle?: string | null;
 };
 
 const maskEmail = (email: string | null | undefined) => {
@@ -17,11 +18,23 @@ const maskEmail = (email: string | null | undefined) => {
   return `Winner: ${maskedUser}@${domain}`;
 };
 
+const formatWinner = (
+  handle?: string | null,
+  email?: string | null
+): string => {
+  if (handle) {
+    const normalized = handle.startsWith("@") ? handle : `@${handle}`;
+    return `Winner: ${normalized}`;
+  }
+  return maskEmail(email);
+};
+
 export default function LatestWinnerCard({
   title,
   imageUrl,
   closesAt,
   winnerEmail,
+  winnerInstagramHandle,
 }: LatestWinnerCardProps) {
   const closedDate = closesAt
     ? `Closed ${new Date(closesAt).toLocaleDateString("en-GB", {
@@ -55,7 +68,9 @@ export default function LatestWinnerCard({
         <div className="flex flex-1 flex-col justify-center space-y-2">
           <h3 className="text-xl font-semibold text-white">{title}</h3>
           <p className="text-sm text-white/60">{closedDate}</p>
-          <p className="text-base text-white/80">{maskEmail(winnerEmail)}</p>
+          <p className="text-base text-white/80">
+            {formatWinner(winnerInstagramHandle, winnerEmail)}
+          </p>
         </div>
       </div>
     </section>

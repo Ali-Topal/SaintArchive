@@ -20,6 +20,7 @@ async function createRaffle(formData: FormData) {
 
   const title = formData.get("title")?.toString().trim() ?? "";
   const rawSlug = formData.get("slug")?.toString().trim() ?? "";
+  const brand = formData.get("brand")?.toString().trim() ?? "";
   const description = formData.get("description")?.toString().trim() ?? "";
   const imageUrls = formData
     .getAll("image_urls")
@@ -88,6 +89,7 @@ async function createRaffle(formData: FormData) {
     title,
     slug: finalSlug,
     description,
+    brand: brand || null,
     image_url: primaryImage,
     image_urls: imageUrls,
     ticket_price_cents: ticketPrice,
@@ -164,6 +166,17 @@ export default async function NewRafflePage({
             <input
               name="slug"
               required
+              className="w-full rounded-2xl border border-white/15 bg-transparent px-4 py-3 text-foreground focus:border-accent focus:outline-none"
+            />
+          </label>
+
+          <label className="space-y-2 text-sm md:col-span-2">
+            <span className="text-muted uppercase tracking-[0.3em]">
+              Brand
+            </span>
+            <input
+              name="brand"
+              placeholder="e.g. Supreme"
               className="w-full rounded-2xl border border-white/15 bg-transparent px-4 py-3 text-foreground focus:border-accent focus:outline-none"
             />
           </label>

@@ -4,9 +4,11 @@ type RaffleCardProps = {
   imageUrl?: string | null;
   closesAt?: string | null;
   winnerEmail?: string | null;
+  winnerInstagramHandle?: string | null;
 };
 
-const maskEmail = (email: string) => {
+const maskEmail = (email: string | null | undefined) => {
+  if (!email) return "TBA";
   const [user, domain] = email.split("@");
   if (!user || !domain) return email;
   const maskedUser =
@@ -14,13 +16,24 @@ const maskEmail = (email: string) => {
   return `${maskedUser}@${domain}`;
 };
 
+const formatWinner = (
+  handle?: string | null,
+  email?: string | null
+): string => {
+  if (handle) {
+    return handle.startsWith("@") ? handle : `@${handle}`;
+  }
+  return maskEmail(email);
+};
+
 export default function RaffleCard({
   title,
   imageUrl,
   closesAt,
   winnerEmail,
+  winnerInstagramHandle,
 }: RaffleCardProps) {
-  const hasWinner = Boolean(winnerEmail);
+  const hasWinner = Boolean(winnerEmail || winnerInstagramHandle);
   const closesDisplay =
     closesAt && !Number.isNaN(new Date(closesAt).valueOf())
       ? new Date(closesAt).toLocaleDateString("en-GB", {
@@ -55,7 +68,7 @@ export default function RaffleCard({
         <div className="mt-auto rounded-2xl border border-white/5 bg-white/5 p-4 text-sm">
           <p className="text-muted uppercase tracking-[0.3em]">Winner</p>
           <p className="text-base text-foreground">
-            {hasWinner ? maskEmail(winnerEmail!) : "TBA"}
+            {hasWinner ? formatWinner(winnerInstagramHandle, winnerEmail) : "TBA"}
           </p>
         </div>
       </div>
