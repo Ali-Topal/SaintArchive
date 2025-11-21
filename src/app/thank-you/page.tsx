@@ -52,6 +52,7 @@ export default async function ThankYouPage({ searchParams }: PageProps) {
 
   const ticketCount = Number(session.metadata?.ticketCount ?? 0);
   const raffleId = session.metadata?.raffleId;
+  const selectedOption = session.metadata?.selectedOption ?? "";
   const entryEmail =
     session.metadata?.email ??
     session.customer_details?.email ??
@@ -109,6 +110,14 @@ export default async function ThankYouPage({ searchParams }: PageProps) {
               {totalLabel ?? "—"}
             </p>
           </div>
+          {selectedOption && (
+            <div className="space-y-1 sm:col-span-2">
+              <p className="text-xs uppercase tracking-[0.3em] text-white/60">
+                Selected option
+              </p>
+              <p className="text-xl font-semibold text-white">{selectedOption}</p>
+            </div>
+          )}
         </div>
       </div>
 

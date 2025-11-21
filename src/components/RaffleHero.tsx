@@ -7,6 +7,7 @@ type RaffleHeroProps = {
   raffleId: string;
   title: string;
   color?: string | null;
+  options?: string[] | null;
   description: string;
   imageUrl?: string;
   imageUrls?: string[] | null;
@@ -27,6 +28,7 @@ export default function RaffleHero({
   raffleId,
   title,
   color,
+  options,
   description,
   imageUrl,
   imageUrls,
@@ -143,6 +145,7 @@ export default function RaffleHero({
             title={title}
             ticketPriceCents={ticketPriceCents}
             maxEntriesPerUser={maxEntriesPerUser}
+            options={options}
             buttonLabel="Enter draw"
             buttonClassName="inline-flex w-full items-center justify-center rounded-full border border-white/30 bg-white px-6 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-black transition hover:opacity-90"
           />

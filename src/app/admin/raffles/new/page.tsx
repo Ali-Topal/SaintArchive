@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import ImageUploaderList from "@/components/ImageUploaderField";
+import OptionsInput from "@/components/OptionsInput";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 async function createRaffle(formData: FormData) {
@@ -26,6 +27,11 @@ async function createRaffle(formData: FormData) {
   const sortPriority =
     sortPriorityRaw && sortPriorityRaw.length > 0 ? Number(sortPriorityRaw) : null;
   const maxEntriesPerUser = Number(formData.get("max_entries_per_user"));
+  const options =
+    formData
+      .getAll("options")
+      .map((value) => value?.toString().trim() ?? "")
+      .filter((value): value is string => value.length > 0) ?? [];
 
   if (
     !title ||
@@ -80,6 +86,7 @@ async function createRaffle(formData: FormData) {
     description,
     brand: brand || null,
     color: color || null,
+    options,
     image_url: primaryImage,
     image_urls: imageUrls,
     ticket_price_cents: ticketPrice,
@@ -167,6 +174,8 @@ export default async function NewRafflePage() {
             />
           </label>
         </div>
+
+        <OptionsInput name="options" initialOptions={[]} label="Options" />
 
         <label className="space-y-2 text-sm block">
           <span className="text-muted uppercase tracking-[0.3em]">

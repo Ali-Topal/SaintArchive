@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import ImageUploaderList from "@/components/ImageUploaderField";
+import OptionsInput from "@/components/OptionsInput";
 import Toast from "@/components/Toast";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
@@ -36,6 +37,10 @@ async function updateRaffleAction(formData: FormData) {
     title: formData.get("title")?.toString().trim() ?? "",
     brand: formData.get("brand")?.toString().trim() ?? "",
     color: formData.get("color")?.toString().trim() ?? "",
+    options: formData
+      .getAll("options")
+      .map((value) => value?.toString().trim() ?? "")
+      .filter((value): value is string => value.length > 0),
     description: formData.get("description")?.toString().trim() ?? "",
     image_urls: formData
       .getAll("image_urls")
@@ -112,6 +117,7 @@ async function updateRaffleAction(formData: FormData) {
       ...payload,
       brand: payload.brand || null,
       color: payload.color || null,
+      options: payload.options ?? [],
       slug: finalSlug,
       image_url: payload.image_urls[0] ?? null,
     })
@@ -326,7 +332,7 @@ export default async function ManageRafflePage({ params }: PageProps) {
   const { data: raffle, error } = await supabase
     .from("raffles")
     .select(
-      "id,title,slug,brand,color,description,image_url,image_urls,ticket_price_cents,max_entries_per_user,max_tickets,closes_at,status,winner_email,winner_instagram_handle,sort_priority"
+      "id,title,slug,brand,color,options,description,image_url,image_urls,ticket_price_cents,max_entries_per_user,max_tickets,closes_at,status,winner_email,winner_instagram_handle,sort_priority"
     )
     .eq("id", id)
     .maybeSingle();
@@ -439,6 +445,12 @@ export default async function ManageRafflePage({ params }: PageProps) {
             />
           </label>
         </div>
+
+        <OptionsInput
+          name="options"
+          initialOptions={raffle.options ?? []}
+          label="Options"
+        />
 
         <label className="space-y-2 text-sm block">
           <span className="text-muted uppercase tracking-[0.3em]">

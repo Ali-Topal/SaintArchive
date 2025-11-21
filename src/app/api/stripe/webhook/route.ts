@@ -14,11 +14,6 @@ if (!webhookSecret) {
 
 const resolvedWebhookSecret: string = webhookSecret;
 
-const ALLOWED_SIZES = ["S", "M", "L", "XL"] as const;
-type SizeOption = (typeof ALLOWED_SIZES)[number];
-const isValidSize = (value: string | null | undefined): value is SizeOption =>
-  !!value && ALLOWED_SIZES.includes(value as SizeOption);
-
 type CheckoutSessionWithShipping = Stripe.Checkout.Session & {
   shipping_details?: {
     name: string | null;
@@ -59,7 +54,7 @@ export async function POST(request: Request) {
   const raffleId = session.metadata?.raffleId ?? null;
   const ticketCountRaw = session.metadata?.ticketCount ?? null;
   const ticketCount = ticketCountRaw ? Number(ticketCountRaw) : NaN;
-  const size = session.metadata?.size?.toUpperCase() ?? null;
+  const selectedOption = session.metadata?.selectedOption ?? "";
   const raffleTitle = session.metadata?.raffleTitle ?? "Your raffle";
   const raffleImage = session.metadata?.raffleImage ?? null;
   const instagramHandle = session.metadata?.instagramHandle ?? null;
@@ -82,7 +77,6 @@ export async function POST(request: Request) {
     !Number.isFinite(ticketCount) ||
     ticketCount < 1 ||
     !email ||
-    !isValidSize(size) ||
     !instagramHandle
   ) {
     console.warn(
@@ -91,7 +85,7 @@ export async function POST(request: Request) {
         raffleId,
         ticketCount,
         email,
-        size,
+        selectedOption,
         instagramHandle,
       })
     );
@@ -112,7 +106,7 @@ export async function POST(request: Request) {
     const { error } = await supabase.from("entries").insert({
       raffle_id: raffleId,
       ticket_count: ticketCount,
-      size,
+      size: selectedOption || null,
       email,
       instagram_handle: instagramHandle,
       shipping_name: shippingDetails.name || null,
@@ -139,7 +133,7 @@ export async function POST(request: Request) {
         raffleTitle,
         raffleId,
         ticketCount,
-        size,
+        selectedOption: selectedOption || undefined,
         shippingDetails,
         raffleImage: raffleImage ?? undefined,
       });

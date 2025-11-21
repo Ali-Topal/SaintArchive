@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import AvailableSizes from "@/components/AvailableSizes";
 import CountdownTimer from "@/components/CountdownTimer";
 import EnterDrawTrigger from "@/components/EnterDrawTrigger";
 import RaffleImageCarousel from "@/components/RaffleImageCarousel";
@@ -12,6 +11,7 @@ type RaffleBySlug = {
   title: string;
   color: string | null;
   description: string;
+  options: string[] | null;
   brand: string | null;
   image_url: string | null;
   image_urls: string[] | null;
@@ -36,7 +36,7 @@ export default async function RaffleDetailPage({ params }: PageProps) {
   const { data: raffleBySlug, error: slugError } = await supabase
     .from("raffles")
     .select(
-      "id,title,color,description,brand,image_url,image_urls,ticket_price_cents,closes_at,status,winner_email,winner_instagram_handle,max_entries_per_user"
+      "id,title,color,description,options,brand,image_url,image_urls,ticket_price_cents,closes_at,status,winner_email,winner_instagram_handle,max_entries_per_user"
     )
     .eq("slug", slug)
     .maybeSingle<RaffleBySlug>();
@@ -47,7 +47,7 @@ export default async function RaffleDetailPage({ params }: PageProps) {
     const { data: raffleById, error: idError } = await supabase
       .from("raffles")
       .select(
-        "id,title,color,description,brand,image_url,image_urls,ticket_price_cents,closes_at,status,winner_email,winner_instagram_handle,max_entries_per_user"
+        "id,title,color,description,options,brand,image_url,image_urls,ticket_price_cents,closes_at,status,winner_email,winner_instagram_handle,max_entries_per_user"
       )
       .eq("id", slug)
       .maybeSingle<RaffleBySlug>();
@@ -105,6 +105,9 @@ export default async function RaffleDetailPage({ params }: PageProps) {
   const introCopy = descriptionBlocks[0] ?? "Prize details coming soon.";
   const detailCopy =
     descriptionBlocks.length > 1 ? descriptionBlocks.slice(1) : [];
+  const optionList =
+    raffle.options?.map((value) => value?.trim()).filter((value): value is string => !!value) ??
+    [];
 
   return (
     <div className="mx-auto max-w-5xl space-y-10 px-4 py-10 text-white md:px-6">
@@ -173,7 +176,23 @@ export default async function RaffleDetailPage({ params }: PageProps) {
 
           <p className="text-xs text-white/60">Closes {closesDisplay}</p>
 
-          <AvailableSizes />
+          {optionList.length > 0 && (
+            <section className="space-y-2 rounded-md border border-[#333] px-5 py-4">
+              <p className="text-xs uppercase tracking-[0.3em] text-white/60">
+                Options
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {optionList.map((option) => (
+                  <span
+                    key={option}
+                    className="rounded-full border border-white/20 px-4 py-1 text-sm text-white/80"
+                  >
+                    {option}
+                  </span>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       </div>
 
@@ -194,6 +213,7 @@ export default async function RaffleDetailPage({ params }: PageProps) {
               title={raffle.title}
               ticketPriceCents={raffle.ticket_price_cents}
               maxEntriesPerUser={raffle.max_entries_per_user ?? undefined}
+              options={optionList}
               buttonLabel="Enter draw"
               buttonClassName="inline-flex w-full items-center justify-center rounded-full border border-white/30 bg-white px-6 py-3 text-sm font-semibold uppercase tracking-[0.3em] text-black transition hover:opacity-90"
             />

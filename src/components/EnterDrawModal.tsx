@@ -9,6 +9,7 @@ type EnterDrawModalProps = {
   title: string;
   ticketPriceCents: number;
   maxEntriesPerUser?: number | null;
+  options?: string[] | null;
 };
 
 const currencyFormatter = new Intl.NumberFormat("en-GB", {
@@ -17,9 +18,6 @@ const currencyFormatter = new Intl.NumberFormat("en-GB", {
 });
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const sizeOptions = ["S", "M", "L", "XL"] as const;
-type SizeOption = (typeof sizeOptions)[number];
-
 export default function EnterDrawModal({
   isOpen,
   onClose,
@@ -27,11 +25,19 @@ export default function EnterDrawModal({
   title,
   ticketPriceCents,
   maxEntriesPerUser,
+  options,
 }: EnterDrawModalProps) {
   const [entryCount, setEntryCount] = useState(1);
   const [email, setEmail] = useState("");
   const [instagramHandle, setInstagramHandle] = useState("");
-  const [size, setSize] = useState<SizeOption | "">("");
+  const optionList = useMemo(
+    () =>
+      (Array.isArray(options) ? options : [])
+        .map((value) => value?.trim())
+        .filter((value): value is string => !!value),
+    [options]
+  );
+  const [selectedOption, setSelectedOption] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const maxEntries = Math.max(1, maxEntriesPerUser ?? 20);
@@ -39,6 +45,17 @@ export default function EnterDrawModal({
   useEffect(() => {
     setEntryCount((prev) => Math.min(prev, maxEntries));
   }, [maxEntries]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (optionList.length === 0) {
+      setSelectedOption("");
+      return;
+    }
+    if (!optionList.includes(selectedOption)) {
+      setSelectedOption(optionList[0]);
+    }
+  }, [isOpen, optionList, selectedOption]);
 
   const totalPrice = useMemo(
     () => ticketPriceCents * entryCount,
@@ -51,7 +68,7 @@ export default function EnterDrawModal({
     setEntryCount(1);
     setEmail("");
     setInstagramHandle("");
-    setSize("");
+    setSelectedOption("");
     onClose();
   };
 
@@ -73,8 +90,8 @@ export default function EnterDrawModal({
       return;
     }
 
-    if (!size) {
-      setError("Select a size.");
+    if (optionList.length > 0 && !selectedOption) {
+      setError("Select an option.");
       return;
     }
 
@@ -92,7 +109,7 @@ export default function EnterDrawModal({
           ticketCount: entryCount,
           email: email.trim(),
           instagramHandle: instagramHandle.trim(),
-          size,
+          selectedOption,
         }),
       });
 
@@ -200,36 +217,38 @@ export default function EnterDrawModal({
             />
           </label>
 
-          <div className="space-y-2">
-            <p className="text-xs uppercase tracking-[0.3em] text-white/60">
-              Size
-            </p>
-            <div className="grid grid-cols-4 gap-2">
-              {sizeOptions.map((option) => {
-                const isSelected = size === option;
-                return (
-                  <button
-                    key={option}
-                    type="button"
-                    onClick={() => setSize(option)}
-                    disabled={isSubmitting}
-                    className={[
-                      "rounded-md border px-3 py-2 text-sm font-semibold uppercase tracking-[0.2em] transition",
-                      isSelected
-                        ? "border-white bg-white text-black"
-                        : "border-white/30 text-white hover:border-white/60",
-                      isSubmitting ? "opacity-70" : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
-                    aria-pressed={isSelected}
-                  >
-                    {option}
-                  </button>
-                );
-              })}
+          {optionList.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs uppercase tracking-[0.3em] text-white/60">
+                Options
+              </p>
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                {optionList.map((option) => {
+                  const isSelected = selectedOption === option;
+                  return (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => setSelectedOption(option)}
+                      disabled={isSubmitting}
+                      className={[
+                        "rounded-md border px-3 py-2 text-sm font-semibold tracking-[0.1em] transition",
+                        isSelected
+                          ? "border-white bg-white text-black"
+                          : "border-white/30 text-white hover:border-white/60",
+                        isSubmitting ? "opacity-70" : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                      aria-pressed={isSelected}
+                    >
+                      {option}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="flex items-center justify-between rounded-md border border-white/15 px-4 py-3">
             <span className="text-xs uppercase tracking-[0.3em] text-white/60">

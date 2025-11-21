@@ -18,6 +18,7 @@ type RaffleRecord = {
   title: string;
   color: string | null;
   description: string;
+  options: string[] | null;
   image_url: string | null;
   image_urls: string[] | null;
   ticket_price_cents: number;
@@ -65,7 +66,7 @@ export default async function HomePage({
   } = await supabase
     .from("raffles")
     .select(
-      "id,title,color,description,image_url,image_urls,ticket_price_cents,closes_at,status,max_tickets,max_entries_per_user,brand,slug,sort_priority"
+      "id,title,color,description,options,image_url,image_urls,ticket_price_cents,closes_at,status,max_tickets,max_entries_per_user,brand,slug,sort_priority"
     )
     .eq("status", "active")
     .order("sort_priority", { ascending: true, nullsFirst: true })
@@ -223,6 +224,7 @@ export default async function HomePage({
         raffleId={heroRaffle.id}
         title={heroRaffle.title}
         color={heroRaffle.color}
+        options={heroRaffle.options}
         description={heroRaffle.description}
         imageUrl={heroRaffle.image_url ?? ""}
         imageUrls={heroRaffle.image_urls ?? undefined}
@@ -333,6 +335,7 @@ export default async function HomePage({
                       title={raffle.title}
                       ticketPriceCents={raffle.ticket_price_cents}
                       maxEntriesPerUser={raffle.max_entries_per_user ?? undefined}
+                      options={raffle.options}
                       buttonLabel="Enter draw"
                       buttonClassName="inline-flex w-full items-center justify-center rounded-full border border-white/30 bg-white px-6 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-black transition hover:opacity-90"
                     />

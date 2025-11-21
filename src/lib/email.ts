@@ -13,7 +13,7 @@ type SendOrderConfirmationEmailParams = {
   raffleId: string;
   raffleTitle: string;
   ticketCount: number;
-  size: string;
+  selectedOption?: string;
   shippingDetails: ShippingDetails;
   raffleImage?: string | null;
 };
@@ -94,11 +94,7 @@ const template = `
                   </td>
                 </tr>
 
-                <tr>
-                  <td style="font-size:15px; color:#000; padding-bottom:6px;">
-                    <strong>Size:</strong> {{size}}
-                  </td>
-                </tr>
+              {{optionSection}}
 
                 <!-- SHIPPING DETAILS -->
                 <tr>
@@ -162,7 +158,7 @@ export async function sendOrderConfirmationEmail({
   raffleId,
   raffleTitle,
   ticketCount,
-  size,
+  selectedOption,
   shippingDetails,
   raffleImage,
 }: SendOrderConfirmationEmailParams) {
@@ -174,11 +170,22 @@ export async function sendOrderConfirmationEmail({
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, "") ?? "https://saintarchive.com";
   const raffleLink = `${baseUrl}/raffles/${raffleId}`;
 
+  const optionSection = selectedOption
+    ? `
+              <tr>
+                <td style="font-size:15px; color:#000; padding-bottom:6px;">
+                  <strong>Option:</strong> {{selectedOption}}
+                </td>
+              </tr>
+            `
+    : "";
+
   const html = template
     .replace(/{{raffleImage}}/g, raffleImage || "")
     .replace(/{{raffleTitle}}/g, raffleTitle || "")
     .replace(/{{ticketCount}}/g, String(ticketCount || ""))
-    .replace(/{{size}}/g, size || "")
+    .replace(/{{optionSection}}/g, optionSection)
+    .replace(/{{selectedOption}}/g, selectedOption || "")
     .replace(/{{shipping_name}}/g, shippingDetails.name || "")
     .replace(/{{shipping_address}}/g, shippingDetails.address || "")
     .replace(/{{shipping_city}}/g, shippingDetails.city || "")

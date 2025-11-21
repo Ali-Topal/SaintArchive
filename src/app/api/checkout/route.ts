@@ -12,7 +12,7 @@ type CheckoutBody = {
   raffleId?: string;
   ticketCount?: number;
   email?: string;
-  size?: string;
+  selectedOption?: string;
   instagramHandle?: string;
 };
 
@@ -25,13 +25,10 @@ type RaffleRow = {
   max_entries_per_user: number | null;
   image_url: string | null;
   image_urls: string[] | null;
+  options: string[] | null;
 };
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const VALID_SIZES = ["S", "M", "L", "XL"] as const;
-type SizeOption = (typeof VALID_SIZES)[number];
-const isValidSize = (value: string): value is SizeOption =>
-  VALID_SIZES.includes(value as SizeOption);
 
 export async function POST(request: Request) {
   let body: CheckoutBody;
@@ -45,7 +42,7 @@ export async function POST(request: Request) {
   const raffleId = body.raffleId?.trim() ?? "";
   const ticketCount = Number(body.ticketCount);
   const email = body.email?.trim() ?? "";
-  const size = body.size?.trim().toUpperCase() ?? "";
+  const selectedOption = body.selectedOption?.trim() ?? "";
   const instagramHandle = body.instagramHandle?.trim() ?? "";
 
   if (!raffleId) {
@@ -69,13 +66,6 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!size || !isValidSize(size)) {
-    return NextResponse.json(
-      { error: "Valid size is required" },
-      { status: 400 }
-    );
-  }
-
   if (!instagramHandle) {
     return NextResponse.json(
       { error: "Instagram handle is required" },
@@ -91,7 +81,7 @@ export async function POST(request: Request) {
   } = await supabase
     .from("raffles")
     .select(
-      "id,title,status,closes_at,ticket_price_cents,max_entries_per_user,image_url,image_urls"
+      "id,title,status,closes_at,ticket_price_cents,max_entries_per_user,image_url,image_urls,options"
     )
     .eq("id", raffleId)
     .single<RaffleRow>();
@@ -137,6 +127,15 @@ export async function POST(request: Request) {
     );
   }
 
+  const optionList =
+    raffle.options?.filter((value): value is string => !!value?.trim()) ?? [];
+  if (optionList.length > 0 && !optionList.includes(selectedOption)) {
+    return NextResponse.json(
+      { error: "Please select a valid option." },
+      { status: 400 }
+    );
+  }
+
   const displayImage =
     raffle.image_urls?.[0] ?? raffle.image_url ?? undefined;
 
@@ -173,7 +172,7 @@ export async function POST(request: Request) {
         raffleId,
         ticketCount: String(ticketCount),
         email,
-        size,
+        selectedOption: optionList.length > 0 ? selectedOption : "",
         raffleTitle: raffle.title,
         raffleImage: displayImage ?? "",
         instagramHandle,
