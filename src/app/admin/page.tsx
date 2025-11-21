@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
-import { createSupabaseServerClient } from "@/lib/supabaseClient";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 const formatDate = (value: string | null) => {
   if (!value) return "TBA";
@@ -24,7 +24,7 @@ async function updateRaffleStatus(formData: FormData) {
     throw new Error("Missing parameters");
   }
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = supabaseAdmin();
   const { error } = await supabase
     .from("raffles")
     .update({ status })
@@ -40,7 +40,7 @@ async function updateRaffleStatus(formData: FormData) {
 }
 
 export default async function AdminPage() {
-  const supabase = await createSupabaseServerClient();
+  const supabase = supabaseAdmin();
   const { data: raffles, error } = await supabase
     .from("raffles")
     .select("id,title,status,closes_at,slug,sort_priority")

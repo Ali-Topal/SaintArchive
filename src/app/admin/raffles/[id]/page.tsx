@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import ImageUploaderList from "@/components/ImageUploaderField";
-import { createSupabaseServerClient } from "@/lib/supabaseClient";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -80,7 +80,7 @@ async function updateRaffleAction(formData: FormData) {
     throw new Error("Slug could not be generated. Please provide a valid slug.");
   }
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = supabaseAdmin();
   let finalSlug = baseSlug;
   let suffix = 1;
 
@@ -137,7 +137,7 @@ async function updateWinnerAction(formData: FormData) {
   const winnerEmail = formData.get("winner_email")?.toString().trim() || null;
   const winnerInstagramHandle =
     formData.get("winner_instagram_handle")?.toString().trim() || null;
-  const supabase = await createSupabaseServerClient();
+  const supabase = supabaseAdmin();
   const { error } = await supabase
     .from("raffles")
     .update({
@@ -164,7 +164,7 @@ async function setWinnerFromEntryAction(formData: FormData) {
     throw new Error("Missing data");
   }
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = supabaseAdmin();
 
   const { data: entry, error: entryError } = await supabase
     .from("entries")
@@ -212,7 +212,7 @@ async function addManualEntryAction(formData: FormData) {
     throw new Error("Email, Instagram handle, and ticket count are required.");
   }
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = supabaseAdmin();
   const { error } = await supabase.from("entries").insert({
     raffle_id: raffleId,
     email,
@@ -243,7 +243,7 @@ async function removeEntryAction(formData: FormData) {
     throw new Error("Missing entry id");
   }
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = supabaseAdmin();
   const { error } = await supabase.from("entries").delete().eq("id", entryId);
 
   if (error) {
@@ -258,7 +258,7 @@ async function removeEntryAction(formData: FormData) {
 
 export default async function ManageRafflePage({ params }: PageProps) {
   const { id } = await params;
-  const supabase = await createSupabaseServerClient();
+  const supabase = supabaseAdmin();
 
   const { data: raffle, error } = await supabase
     .from("raffles")

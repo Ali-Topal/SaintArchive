@@ -1,7 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import ImageUploaderList from "@/components/ImageUploaderField";
-import { createSupabaseServerClient } from "@/lib/supabaseClient";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 async function createRaffle(formData: FormData) {
   "use server";
@@ -51,7 +51,7 @@ async function createRaffle(formData: FormData) {
     throw new Error("Slug could not be generated. Please provide a valid slug.");
   }
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = supabaseAdmin();
   let finalSlug = baseSlug;
   let suffix = 1;
   // Ensure slug uniqueness before insert to avoid constraint violation
