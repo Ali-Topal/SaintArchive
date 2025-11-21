@@ -10,7 +10,7 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "Lucian Saint Raffles",
+  title: "Saint Archive",
   description: "A luxury raffle experience in the making.",
   icons: {
     icon: "/IMG_1176.png",
