@@ -38,9 +38,8 @@ export default function Layout({ children }: LayoutProps) {
           >
             SAINT ARCHIVE
           </Link>
-          <div className="flex w-full flex-col items-center gap-4 md:grid md:grid-cols-[1fr_auto_1fr] md:items-center">
-            <div className="hidden md:block" aria-hidden="true" />
-            <nav className="flex flex-wrap justify-center gap-5 text-base pb-4 md:pb-0">
+          <div className="flex w-full flex-col items-center gap-4">
+            <nav className="flex flex-wrap justify-center gap-5 pb-2 text-base md:pb-3">
               {navItems.map((item) => (
                 <Link
                   key={item.href}
@@ -51,7 +50,7 @@ export default function Layout({ children }: LayoutProps) {
                 </Link>
               ))}
             </nav>
-            <div className="flex items-center gap-4 md:justify-end">
+            <div className="flex items-center gap-4">
               {socialLinks.map(({ href, label, Icon }) => (
                 <a
                   key={href}
@@ -59,7 +58,7 @@ export default function Layout({ children }: LayoutProps) {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={label}
-                  className="flex items-center gap-2 text-white opacity-80 transition-opacity duration-200 hover:opacity-100"
+                  className="flex items-center gap-4 text-white opacity-80 transition-opacity duration-200 hover:opacity-100"
                 >
                   <Icon className="h-5 w-5" strokeWidth={1.75} />
                 </a>
