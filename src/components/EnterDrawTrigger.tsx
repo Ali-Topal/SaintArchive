@@ -7,6 +7,7 @@ type EnterDrawTriggerProps = {
   raffleId: string;
   title: string;
   ticketPriceCents: number;
+  maxEntriesPerUser?: number | null;
   buttonLabel?: string;
   buttonClassName?: string;
 };
@@ -15,6 +16,7 @@ export default function EnterDrawTrigger({
   raffleId,
   title,
   ticketPriceCents,
+  maxEntriesPerUser,
   buttonLabel = "Enter draw",
   buttonClassName,
 }: EnterDrawTriggerProps) {
@@ -39,6 +41,7 @@ export default function EnterDrawTrigger({
         raffleId={raffleId}
         title={title}
         ticketPriceCents={ticketPriceCents}
+        maxEntriesPerUser={maxEntriesPerUser}
       />
     </>
   );

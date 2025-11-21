@@ -22,6 +22,7 @@ type RaffleRecord = {
   closes_at: string | null;
   status: string;
   max_tickets: number | null;
+  max_entries_per_user: number | null;
   slug?: string | null;
   sort_priority: number | null;
 };
@@ -53,7 +54,7 @@ export default async function HomePage() {
   } = await supabase
     .from("raffles")
     .select(
-      "id,title,description,image_url,image_urls,ticket_price_cents,closes_at,status,max_tickets,slug,sort_priority"
+      "id,title,description,image_url,image_urls,ticket_price_cents,closes_at,status,max_tickets,max_entries_per_user,slug,sort_priority"
     )
     .eq("status", "active")
     .order("sort_priority", { ascending: true, nullsFirst: true })
@@ -153,6 +154,7 @@ export default async function HomePage() {
         closesAt={heroRaffle.closes_at ?? undefined}
         entriesCount={heroEntries ?? 0}
         enterEnabled={heroRaffle.status === "active"}
+        maxEntriesPerUser={heroRaffle.max_entries_per_user ?? undefined}
         detailHref={
           heroRaffle.slug ? `/raffles/${heroRaffle.slug}` : `/raffles/${heroRaffle.id}`
         }
@@ -210,7 +212,7 @@ export default async function HomePage() {
                       </h3>
                       <div className="flex flex-wrap items-center gap-4 text-right">
                         <div>
-                          <p className="text-xs uppercase text-white/50">Ticket</p>
+                          <p className="text-xs uppercase text-white/50">Ticket price</p>
                           <p className="text-lg font-semibold text-white">
                             {priceFormatter.format(raffle.ticket_price_cents / 100)}
                           </p>
@@ -249,6 +251,7 @@ export default async function HomePage() {
                       raffleId={raffle.id}
                       title={raffle.title}
                       ticketPriceCents={raffle.ticket_price_cents}
+                      maxEntriesPerUser={raffle.max_entries_per_user ?? undefined}
                       buttonLabel="Enter draw"
                       buttonClassName="inline-flex w-full items-center justify-center rounded-full border border-white/30 bg-white px-6 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-black transition hover:opacity-90"
                     />

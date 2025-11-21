@@ -35,9 +35,20 @@ async function createRaffle(formData: FormData) {
   const sortPriorityRaw = formData.get("sort_priority")?.toString().trim();
   const sortPriority =
     sortPriorityRaw && sortPriorityRaw.length > 0 ? Number(sortPriorityRaw) : null;
+  const maxEntriesPerUser = Number(formData.get("max_entries_per_user"));
 
-  if (!title || !rawSlug || !description || !Number.isFinite(ticketPrice)) {
+  if (
+    !title ||
+    !rawSlug ||
+    !description ||
+    !Number.isFinite(ticketPrice) ||
+    !Number.isFinite(maxEntriesPerUser)
+  ) {
     throw new Error("Missing required fields.");
+  }
+
+  if (maxEntriesPerUser < 1) {
+    throw new Error("Max entries per user must be at least 1.");
   }
 
   const normalizeSlug = (value: string) =>
@@ -80,6 +91,7 @@ async function createRaffle(formData: FormData) {
     image_url: primaryImage,
     image_urls: imageUrls,
     ticket_price_cents: ticketPrice,
+    max_entries_per_user: maxEntriesPerUser,
     closes_at: closesAt && !Number.isNaN(closesAt.valueOf())
       ? closesAt.toISOString()
       : null,
@@ -180,15 +192,28 @@ export default async function NewRafflePage({
           />
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-3">
           <label className="space-y-2 text-sm">
             <span className="text-muted uppercase tracking-[0.3em]">
               Ticket Price (pence)
             </span>
             <input
               type="number"
-              min={100}
               name="ticket_price_cents"
+              required
+              className="w-full rounded-2xl border border-white/15 bg-transparent px-4 py-3 text-foreground focus:border-accent focus:outline-none"
+            />
+          </label>
+
+          <label className="space-y-2 text-sm">
+            <span className="text-muted uppercase tracking-[0.3em]">
+              Max entries per user
+            </span>
+            <input
+              type="number"
+              min={1}
+              name="max_entries_per_user"
+              defaultValue={20}
               required
               className="w-full rounded-2xl border border-white/15 bg-transparent px-4 py-3 text-foreground focus:border-accent focus:outline-none"
             />

@@ -17,6 +17,7 @@ type RaffleBySlug = {
   closes_at: string | null;
   status: string;
   winner_email: string | null;
+  max_entries_per_user: number | null;
 };
 
 type PageProps = {
@@ -32,7 +33,7 @@ export default async function RaffleDetailPage({ params }: PageProps) {
   const { data: raffleBySlug, error: slugError } = await supabase
     .from("raffles")
     .select(
-      "id,title,description,image_url,image_urls,ticket_price_cents,closes_at,status,winner_email"
+      "id,title,description,image_url,image_urls,ticket_price_cents,closes_at,status,winner_email,max_entries_per_user"
     )
     .eq("slug", slug)
     .maybeSingle<RaffleBySlug>();
@@ -43,7 +44,7 @@ export default async function RaffleDetailPage({ params }: PageProps) {
     const { data: raffleById, error: idError } = await supabase
       .from("raffles")
       .select(
-        "id,title,description,image_url,image_urls,ticket_price_cents,closes_at,status,winner_email"
+          "id,title,description,image_url,image_urls,ticket_price_cents,closes_at,status,winner_email,max_entries_per_user"
       )
       .eq("id", slug)
       .maybeSingle<RaffleBySlug>();
@@ -178,6 +179,7 @@ export default async function RaffleDetailPage({ params }: PageProps) {
               raffleId={raffle.id}
               title={raffle.title}
               ticketPriceCents={raffle.ticket_price_cents}
+              maxEntriesPerUser={raffle.max_entries_per_user ?? undefined}
               buttonLabel="Enter draw"
               buttonClassName="inline-flex w-full items-center justify-center rounded-full border border-white/30 bg-white px-6 py-3 text-sm font-semibold uppercase tracking-[0.3em] text-black transition hover:opacity-90"
             />

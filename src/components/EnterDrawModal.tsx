@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type EnterDrawModalProps = {
   isOpen: boolean;
@@ -8,6 +8,7 @@ type EnterDrawModalProps = {
   raffleId: string;
   title: string;
   ticketPriceCents: number;
+  maxEntriesPerUser?: number | null;
 };
 
 const currencyFormatter = new Intl.NumberFormat("en-GB", {
@@ -25,12 +26,18 @@ export default function EnterDrawModal({
   raffleId,
   title,
   ticketPriceCents,
+  maxEntriesPerUser,
 }: EnterDrawModalProps) {
   const [entryCount, setEntryCount] = useState(1);
   const [email, setEmail] = useState("");
   const [size, setSize] = useState<SizeOption | "">("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const maxEntries = Math.max(1, maxEntriesPerUser ?? 20);
+
+  useEffect(() => {
+    setEntryCount((prev) => Math.min(prev, maxEntries));
+  }, [maxEntries]);
 
   const totalPrice = useMemo(
     () => ticketPriceCents * entryCount,
@@ -49,7 +56,7 @@ export default function EnterDrawModal({
   const adjustEntryCount = (delta: number) => {
     setEntryCount((prev) => {
       const next = prev + delta;
-      return Math.min(20, Math.max(1, next));
+      return Math.min(maxEntries, Math.max(1, next));
     });
   };
 
@@ -144,13 +151,15 @@ export default function EnterDrawModal({
               <button
                 type="button"
                 onClick={() => adjustEntryCount(1)}
-                disabled={entryCount >= 20 || isSubmitting}
+                disabled={entryCount >= maxEntries || isSubmitting}
                 className="h-10 w-10 rounded-full border border-white/30 text-lg text-white disabled:opacity-40"
               >
                 +
               </button>
             </div>
-            <p className="text-xs text-white/60">Min 1 · Max 20 entries</p>
+            <p className="text-xs text-white/60">
+              Min 1 · Max {maxEntries} entries
+            </p>
           </div>
 
           <label className="block space-y-2">

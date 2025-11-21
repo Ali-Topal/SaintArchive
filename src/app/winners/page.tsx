@@ -8,6 +8,7 @@ type WinnersRaffle = {
   image_urls: string[] | null;
   closes_at: string | null;
   winner_email: string | null;
+  status: string;
 };
 
 export const revalidate = 60;
@@ -26,7 +27,17 @@ export default async function WinnersPage() {
     console.error("[winners] Failed to load raffles:", error.message);
   }
 
-  const items = raffles ?? [];
+  const nowDate = new Date();
+  const items =
+    raffles?.filter((raffle) => {
+      if (raffle.status === "closed") {
+        return true;
+      }
+      if (raffle.winner_email && raffle.closes_at) {
+        return new Date(raffle.closes_at) <= nowDate;
+      }
+      return false;
+    }) ?? [];
 
   return (
     <section className="space-y-10 py-16">

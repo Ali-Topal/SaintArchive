@@ -15,6 +15,14 @@ type CheckoutBody = {
   size?: string;
 };
 
+type RaffleRow = {
+  id: string;
+  title: string;
+  status: string;
+  ticket_price_cents: number;
+  max_entries_per_user: number | null;
+};
+
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const VALID_SIZES = ["S", "M", "L", "XL"] as const;
 type SizeOption = (typeof VALID_SIZES)[number];
@@ -70,9 +78,9 @@ export async function POST(request: Request) {
     error: raffleError,
   } = await supabase
     .from("raffles")
-    .select("id,title,status,ticket_price_cents")
+    .select("id,title,status,ticket_price_cents,max_entries_per_user")
     .eq("id", raffleId)
-    .single();
+    .single<RaffleRow>();
 
   if (
     raffleError ||
@@ -92,6 +100,14 @@ export async function POST(request: Request) {
   if (!Number.isInteger(totalAmount) || totalAmount <= 0) {
     return NextResponse.json(
       { error: "Invalid ticket price configuration" },
+      { status: 400 }
+    );
+  }
+
+  const perUserLimit = raffle.max_entries_per_user ?? null;
+  if (perUserLimit && ticketCount > perUserLimit) {
+    return NextResponse.json(
+      { error: `Maximum ${perUserLimit} entries allowed per user.` },
       { status: 400 }
     );
   }

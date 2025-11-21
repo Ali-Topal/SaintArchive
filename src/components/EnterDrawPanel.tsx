@@ -6,6 +6,7 @@ type EnterDrawPanelProps = {
   raffleId: string;
   ticketPriceCents: number;
   maxTickets?: number | null;
+  maxEntriesPerUser?: number | null;
   currentEntriesCount: number;
 };
 
@@ -14,12 +15,11 @@ const formatter = new Intl.NumberFormat("en-GB", {
   currency: "GBP",
 });
 
-const MAX_PER_ORDER = 20;
-
 export default function EnterDrawPanel({
   raffleId,
   ticketPriceCents,
   maxTickets,
+  maxEntriesPerUser,
   currentEntriesCount,
 }: EnterDrawPanelProps) {
   const [ticketCount, setTicketCount] = useState(1);
@@ -31,12 +31,14 @@ export default function EnterDrawPanel({
       ? Math.max(maxTickets - currentEntriesCount, 0)
       : null;
 
+  const perUserLimit = Math.max(1, maxEntriesPerUser ?? 20);
+
   const maxSelectable = useMemo(() => {
     if (ticketsLeft !== null) {
-      return Math.max(1, Math.min(MAX_PER_ORDER, ticketsLeft));
+      return Math.max(1, Math.min(perUserLimit, ticketsLeft));
     }
-    return MAX_PER_ORDER;
-  }, [ticketsLeft]);
+    return perUserLimit;
+  }, [ticketsLeft, perUserLimit]);
 
   const pricePerTicket = ticketPriceCents / 100;
   const totalPrice = formatter.format(ticketCount * pricePerTicket);

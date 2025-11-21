@@ -36,6 +36,8 @@ async function updateRaffleAction(formData: FormData) {
   const sortPriority =
     sortPriorityRaw && sortPriorityRaw.length > 0 ? Number(sortPriorityRaw) : null;
 
+  const maxEntriesPerUser = Number(formData.get("max_entries_per_user"));
+
   const payload = {
     title: formData.get("title")?.toString().trim() ?? "",
     description: formData.get("description")?.toString().trim() ?? "",
@@ -44,6 +46,7 @@ async function updateRaffleAction(formData: FormData) {
       .map((value) => value?.toString().trim() ?? "")
       .filter((value): value is string => value.length > 0),
     ticket_price_cents: Number(formData.get("ticket_price_cents")),
+    max_entries_per_user: maxEntriesPerUser,
     max_tickets:
       formData.get("max_tickets")?.toString().trim() === ""
         ? null
@@ -62,8 +65,15 @@ async function updateRaffleAction(formData: FormData) {
     throw new Error("Title, slug, and description are required.");
   }
 
-  if (!Number.isFinite(payload.ticket_price_cents)) {
+  if (
+    !Number.isFinite(payload.ticket_price_cents) ||
+    !Number.isFinite(payload.max_entries_per_user)
+  ) {
     throw new Error("Ticket price invalid.");
+  }
+
+  if ((payload.max_entries_per_user ?? 0) < 1) {
+    throw new Error("Max entries per user must be at least 1.");
   }
 
   const normalizeSlug = (value: string) =>
@@ -267,7 +277,7 @@ export default async function ManageRafflePage({
   const { data: raffle, error } = await supabase
     .from("raffles")
     .select(
-      "id,title,slug,description,image_url,image_urls,ticket_price_cents,max_tickets,closes_at,status,winner_email,sort_priority"
+      "id,title,slug,description,image_url,image_urls,ticket_price_cents,max_entries_per_user,max_tickets,closes_at,status,winner_email,sort_priority"
     )
     .eq("id", id)
     .maybeSingle();
@@ -378,16 +388,28 @@ export default async function ManageRafflePage({
             </select>
           </label>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-4">
           <label className="space-y-2 text-sm">
             <span className="text-muted uppercase tracking-[0.3em]">
               Ticket price (pence)
             </span>
             <input
               type="number"
-              min={100}
               name="ticket_price_cents"
               defaultValue={raffle.ticket_price_cents ?? 0}
+              required
+              className="w-full rounded-2xl border border-white/15 bg-transparent px-4 py-3 text-foreground focus:border-accent focus:outline-none"
+            />
+          </label>
+          <label className="space-y-2 text-sm">
+            <span className="text-muted uppercase tracking-[0.3em]">
+              Max entries per user
+            </span>
+            <input
+              type="number"
+              min={1}
+              name="max_entries_per_user"
+              defaultValue={raffle.max_entries_per_user ?? 20}
               required
               className="w-full rounded-2xl border border-white/15 bg-transparent px-4 py-3 text-foreground focus:border-accent focus:outline-none"
             />

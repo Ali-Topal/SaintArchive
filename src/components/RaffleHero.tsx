@@ -14,6 +14,7 @@ type RaffleHeroProps = {
   entriesCount: number;
   enterEnabled?: boolean;
   detailHref?: string;
+  maxEntriesPerUser?: number | null;
 };
 
 const priceFormatter = new Intl.NumberFormat("en-GB", {
@@ -32,6 +33,7 @@ export default function RaffleHero({
   entriesCount,
   enterEnabled = true,
   detailHref,
+  maxEntriesPerUser,
 }: RaffleHeroProps) {
   const formattedPrice = priceFormatter.format(ticketPriceCents / 100);
   const displayImages =
@@ -131,6 +133,7 @@ export default function RaffleHero({
             raffleId={raffleId}
             title={title}
             ticketPriceCents={ticketPriceCents}
+            maxEntriesPerUser={maxEntriesPerUser}
             buttonLabel="Enter draw"
             buttonClassName="inline-flex w-full items-center justify-center rounded-full border border-white/30 bg-white px-6 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-black transition hover:opacity-90"
           />
