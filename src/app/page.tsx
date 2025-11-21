@@ -80,7 +80,7 @@ export default async function HomePage({
     return (
       <section className="flex min-h-[60vh] items-center justify-center text-center rounded-[32px] border border-white/10 bg-white/5/20 px-8 py-24">
         <p className="text-base uppercase tracking-[0.5em] text-muted">
-          No active drop right now. Follow @saintarchive88 for the next one.
+          No active drop right now. Follow <b><a href="https://instagram.com/saintarchive88" target="_blank" rel="noopener noreferrer">@saintarchive88</a></b> for the next one.
         </p>
       </section>
     );
@@ -254,11 +254,11 @@ export default async function HomePage({
             return (
               <article
                 key={raffle.id}
-                className="rounded-2xl border border-neutral-800 bg-[#050505] p-6 transition hover:border-white"
+                className="flex h-full flex-col rounded-2xl border border-neutral-800 bg-[#050505] p-6 transition hover:border-white"
               >
                 <Link
                   href={detailHref}
-                  className="flex flex-col gap-5"
+                  className="flex flex-1 flex-col gap-5"
                 >
                   <div className="rounded-xl border border-neutral-800">
                     <img
@@ -282,18 +282,16 @@ export default async function HomePage({
                           })
                         : "TBA"}
                     </p>
-                    <div className="flex flex-wrap items-end justify-between gap-4">
+                    <div className="flex flex-col gap-3">
                       <div>
-                        <h3 className="text-2xl font-semibold text-white">
-                          {raffle.title}
-                        </h3>
+                        <h3 className="text-2xl font-semibold text-white">{raffle.title}</h3>
                         {raffle.color && (
                           <p className="text-xs uppercase tracking-[0.3em] text-white/60">
                             {raffle.color}
                           </p>
                         )}
                       </div>
-                      <div className="flex flex-wrap items-center gap-4 text-right">
+                      <div className="flex flex-wrap items-center gap-4 text-left">
                         <div>
                           <p className="text-xs uppercase text-white/50">Ticket price</p>
                           <p className="text-lg font-semibold text-white">
@@ -309,7 +307,7 @@ export default async function HomePage({
                       </div>
                     </div>
                   </div>
-                  <div className="rounded-xl border border-white/10 bg-[#020202] px-5 py-4">
+                  <div className="mt-auto rounded-xl border border-white/10 bg-[#020202] px-5 py-4">
                     <p className="text-xs uppercase text-white/60">Countdown</p>
                     {raffle.closes_at ? (
                       <CountdownTimer
