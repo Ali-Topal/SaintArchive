@@ -78,7 +78,7 @@ export default async function HomePage({
     return (
       <section className="flex min-h-[60vh] items-center justify-center text-center rounded-[32px] border border-white/10 bg-white/5/20 px-8 py-24">
         <p className="text-base uppercase tracking-[0.5em] text-muted">
-          No active drop right now. Follow @luciansaint for the next one.
+          No active drop right now. Follow @saintarchive88 for the next one.
         </p>
       </section>
     );
@@ -118,7 +118,7 @@ export default async function HomePage({
           <p className="text-base uppercase tracking-[0.4em] text-muted">
             {selectedBrandRaw
               ? `No active drops for ${selectedBrandRaw}`
-              : "No active drop right now. Follow @luciansaint for the next one."}
+              : "No active drop right now. Follow @saintarchive88 for the next one."}
           </p>
         </section>
       </div>
