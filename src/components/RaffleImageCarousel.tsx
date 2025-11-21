@@ -16,6 +16,8 @@ export default function RaffleImageCarousel({
   showControls = true,
 }: RaffleImageCarouselProps) {
   const [index, setIndex] = useState(0);
+  const [startX, setStartX] = useState<number | null>(null);
+  const [endX, setEndX] = useState<number | null>(null);
 
   if (images.length === 0) {
     return (
@@ -27,6 +29,35 @@ export default function RaffleImageCarousel({
 
   const currentImage = images[index];
 
+  const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    const touch = event.touches[0];
+    setStartX(touch.clientX);
+    setEndX(null);
+  };
+
+  const handleTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+    const touch = event.touches[0];
+    setEndX(touch.clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (startX === null || endX === null) {
+      setStartX(null);
+      setEndX(null);
+      return;
+    }
+
+    const delta = startX - endX;
+    const threshold = 30;
+    if (delta > threshold) {
+      goNext();
+    } else if (delta < -threshold) {
+      goPrevious();
+    }
+    setStartX(null);
+    setEndX(null);
+  };
+
   const goPrevious = () => {
     setIndex((prev) => (prev - 1 + images.length) % images.length);
   };
@@ -36,7 +67,12 @@ export default function RaffleImageCarousel({
   };
 
   return (
-    <div className="relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl border border-neutral-800 bg-black/30">
+    <div
+      className="relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl border border-neutral-800 bg-black/30"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       <img
         src={currentImage}
         alt={title}
@@ -48,7 +84,7 @@ export default function RaffleImageCarousel({
             type="button"
             onClick={goPrevious}
             aria-label="Previous image"
-            className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full border border-white/40 bg-black/40 p-2 text-2xl leading-none text-white hover:bg-black/60"
+            className="absolute left-3 top-1/2 hidden -translate-y-1/2 rounded-full border border-white/40 bg-black/40 p-2 text-2xl leading-none text-white hover:bg-black/60 md:inline-flex"
           >
             ←
           </button>
@@ -56,7 +92,7 @@ export default function RaffleImageCarousel({
             type="button"
             onClick={goNext}
             aria-label="Next image"
-            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full border border-white/40 bg-black/40 p-2 text-2xl leading-none text-white hover:bg-black/60"
+            className="absolute right-3 top-1/2 hidden -translate-y-1/2 rounded-full border border-white/40 bg-black/40 p-2 text-2xl leading-none text-white hover:bg-black/60 md:inline-flex"
           >
             →
           </button>

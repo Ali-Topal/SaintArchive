@@ -40,7 +40,7 @@ export default function Layout({ children }: LayoutProps) {
           </Link>
           <div className="flex w-full flex-col items-center gap-4 md:grid md:grid-cols-[1fr_auto_1fr] md:items-center">
             <div className="hidden md:block" aria-hidden="true" />
-            <nav className="flex flex-wrap justify-center gap-5 text-base">
+            <nav className="flex flex-wrap justify-center gap-5 text-base pb-4 md:pb-0">
               {navItems.map((item) => (
                 <Link
                   key={item.href}
