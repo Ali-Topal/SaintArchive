@@ -19,6 +19,13 @@ type SizeOption = (typeof ALLOWED_SIZES)[number];
 const isValidSize = (value: string | null | undefined): value is SizeOption =>
   !!value && ALLOWED_SIZES.includes(value as SizeOption);
 
+type CheckoutSessionWithShipping = Stripe.Checkout.Session & {
+  shipping_details?: {
+    name: string | null;
+    address: Stripe.Address | null;
+  } | null;
+};
+
 export async function POST(request: Request) {
   const rawBody = await request.text();
   const signature = request.headers.get("stripe-signature");
@@ -48,7 +55,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ received: true }, { status: 200 });
   }
 
-  const session = event.data.object as Stripe.Checkout.Session;
+  const session = event.data.object as CheckoutSessionWithShipping;
   const raffleId = session.metadata?.raffleId ?? null;
   const ticketCountRaw = session.metadata?.ticketCount ?? null;
   const ticketCount = ticketCountRaw ? Number(ticketCountRaw) : NaN;
@@ -87,9 +94,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ received: true }, { status: 200 });
   }
 
-  const shipping = (session as Stripe.Checkout.Session & {
-    shipping_details?: Stripe.Checkout.Session.ShippingDetails | null;
-  }).shipping_details;
+  const shipping = session.shipping_details;
   const shippingDetails = {
     name: shipping?.name || "",
     address: shipping?.address?.line1 || "",
