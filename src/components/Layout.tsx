@@ -9,7 +9,7 @@ type LayoutProps = {
 const navItems = [
   { href: "/", label: "Home" },
   { href: "/winners", label: "Winners" },
-  { href: "/info", label: "How it works" },
+  { href: "/info", label: "How it Works" },
 ];
 
 const socialLinks = [

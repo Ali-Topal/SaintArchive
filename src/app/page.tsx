@@ -16,6 +16,7 @@ export const revalidate = 0;
 type RaffleRecord = {
   id: string;
   title: string;
+  color: string | null;
   description: string;
   image_url: string | null;
   image_urls: string[] | null;
@@ -36,6 +37,7 @@ type EntriesRow = {
 type HighlightRaffle = {
   id: string;
   title: string;
+  color?: string | null;
   image_url: string | null;
   image_urls: string[] | null;
   closes_at: string | null;
@@ -63,7 +65,7 @@ export default async function HomePage({
   } = await supabase
     .from("raffles")
     .select(
-      "id,title,description,image_url,image_urls,ticket_price_cents,closes_at,status,max_tickets,max_entries_per_user,brand,slug,sort_priority"
+      "id,title,color,description,image_url,image_urls,ticket_price_cents,closes_at,status,max_tickets,max_entries_per_user,brand,slug,sort_priority"
     )
     .eq("status", "active")
     .order("sort_priority", { ascending: true, nullsFirst: true })
@@ -178,7 +180,7 @@ export default async function HomePage({
 
   const { data: nextDrop } = await supabase
     .from("raffles")
-    .select("id,title,image_url,image_urls,closes_at,status")
+    .select("id,title,color,image_url,image_urls,closes_at,status")
     .eq("status", "upcoming")
     .order("closes_at", { ascending: true })
     .limit(1)
@@ -187,7 +189,7 @@ export default async function HomePage({
   const { data: latestWinner } = await supabase
     .from("raffles")
     .select(
-      "id,title,image_url,image_urls,closes_at,winner_email,winner_instagram_handle,status"
+      "id,title,color,image_url,image_urls,closes_at,winner_email,winner_instagram_handle,status"
     )
     .eq("status", "closed")
     .order("closes_at", { ascending: false })
@@ -220,6 +222,7 @@ export default async function HomePage({
       <RaffleHero
         raffleId={heroRaffle.id}
         title={heroRaffle.title}
+        color={heroRaffle.color}
         description={heroRaffle.description}
         imageUrl={heroRaffle.image_url ?? ""}
         imageUrls={heroRaffle.image_urls ?? undefined}
@@ -280,9 +283,16 @@ export default async function HomePage({
                         : "TBA"}
                     </p>
                     <div className="flex flex-wrap items-end justify-between gap-4">
-                      <h3 className="text-2xl font-semibold text-white">
-                        {raffle.title}
-                      </h3>
+                      <div>
+                        <h3 className="text-2xl font-semibold text-white">
+                          {raffle.title}
+                        </h3>
+                        {raffle.color && (
+                          <p className="text-xs uppercase tracking-[0.3em] text-white/60">
+                            {raffle.color}
+                          </p>
+                        )}
+                      </div>
                       <div className="flex flex-wrap items-center gap-4 text-right">
                         <div>
                           <p className="text-xs uppercase text-white/50">Ticket price</p>

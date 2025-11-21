@@ -33,6 +33,7 @@ async function updateRaffleAction(formData: FormData) {
   const payload = {
     title: formData.get("title")?.toString().trim() ?? "",
     brand: formData.get("brand")?.toString().trim() ?? "",
+    color: formData.get("color")?.toString().trim() ?? "",
     description: formData.get("description")?.toString().trim() ?? "",
     image_urls: formData
       .getAll("image_urls")
@@ -108,6 +109,7 @@ async function updateRaffleAction(formData: FormData) {
     .update({
       ...payload,
       brand: payload.brand || null,
+      color: payload.color || null,
       slug: finalSlug,
       image_url: payload.image_urls[0] ?? null,
     })
@@ -263,7 +265,7 @@ export default async function ManageRafflePage({ params }: PageProps) {
   const { data: raffle, error } = await supabase
     .from("raffles")
     .select(
-      "id,title,slug,brand,description,image_url,image_urls,ticket_price_cents,max_entries_per_user,max_tickets,closes_at,status,winner_email,winner_instagram_handle,sort_priority"
+      "id,title,slug,brand,color,description,image_url,image_urls,ticket_price_cents,max_entries_per_user,max_tickets,closes_at,status,winner_email,winner_instagram_handle,sort_priority"
     )
     .eq("id", id)
     .maybeSingle();
@@ -341,7 +343,7 @@ export default async function ManageRafflePage({ params }: PageProps) {
             />
           </label>
 
-          <label className="space-y-2 text-sm md:col-span-2">
+          <label className="space-y-2 text-sm">
             <span className="text-muted uppercase tracking-[0.3em]">
               Brand
             </span>
@@ -350,6 +352,18 @@ export default async function ManageRafflePage({ params }: PageProps) {
               defaultValue={raffle.brand ?? ""}
               className="w-full rounded-2xl border border-white/15 bg-transparent px-4 py-3 text-foreground focus:border-accent focus:outline-none"
               placeholder="e.g. Supreme"
+            />
+          </label>
+
+          <label className="space-y-2 text-sm">
+            <span className="text-muted uppercase tracking-[0.3em]">
+              Colour
+            </span>
+            <input
+              name="color"
+              defaultValue={raffle.color ?? ""}
+              className="w-full rounded-2xl border border-white/15 bg-transparent px-4 py-3 text-foreground focus:border-accent focus:outline-none"
+              placeholder="e.g. Navy / Olive"
             />
           </label>
         </div>

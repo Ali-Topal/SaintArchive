@@ -9,6 +9,7 @@ async function createRaffle(formData: FormData) {
   const title = formData.get("title")?.toString().trim() ?? "";
   const rawSlug = formData.get("slug")?.toString().trim() ?? "";
   const brand = formData.get("brand")?.toString().trim() ?? "";
+  const color = formData.get("color")?.toString().trim() ?? "";
   const description = formData.get("description")?.toString().trim() ?? "";
   const imageUrls = formData
     .getAll("image_urls")
@@ -78,6 +79,7 @@ async function createRaffle(formData: FormData) {
     slug: finalSlug,
     description,
     brand: brand || null,
+    color: color || null,
     image_url: primaryImage,
     image_urls: imageUrls,
     ticket_price_cents: ticketPrice,
@@ -143,13 +145,24 @@ export default async function NewRafflePage() {
             />
           </label>
 
-          <label className="space-y-2 text-sm md:col-span-2">
+          <label className="space-y-2 text-sm">
             <span className="text-muted uppercase tracking-[0.3em]">
               Brand
             </span>
             <input
               name="brand"
               placeholder="e.g. Supreme"
+              className="w-full rounded-2xl border border-white/15 bg-transparent px-4 py-3 text-foreground focus:border-accent focus:outline-none"
+            />
+          </label>
+
+          <label className="space-y-2 text-sm">
+            <span className="text-muted uppercase tracking-[0.3em]">
+              Colour
+            </span>
+            <input
+              name="color"
+              placeholder="e.g. Navy / Olive"
               className="w-full rounded-2xl border border-white/15 bg-transparent px-4 py-3 text-foreground focus:border-accent focus:outline-none"
             />
           </label>

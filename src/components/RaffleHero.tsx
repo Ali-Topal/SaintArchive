@@ -6,6 +6,7 @@ import EnterDrawTrigger from "./EnterDrawTrigger";
 type RaffleHeroProps = {
   raffleId: string;
   title: string;
+  color?: string | null;
   description: string;
   imageUrl?: string;
   imageUrls?: string[] | null;
@@ -25,6 +26,7 @@ const priceFormatter = new Intl.NumberFormat("en-GB", {
 export default function RaffleHero({
   raffleId,
   title,
+  color,
   description,
   imageUrl,
   imageUrls,
@@ -58,8 +60,15 @@ export default function RaffleHero({
   const gridContent = (
     <div className="grid gap-8 lg:grid-cols-2 lg:gap-10">
       <div className="order-2 flex flex-col gap-6 lg:order-1">
-        <div className="space-y-4">
-          <h1 className="text-3xl font-semibold text-white">{title}</h1>
+        <div className="space-y-2">
+          <div>
+            <h1 className="text-3xl font-semibold text-white">{title}</h1>
+            {color && (
+              <p className="text-sm uppercase tracking-[0.3em] text-white/60">
+                {color}
+              </p>
+            )}
+          </div>
           <p className="text-base text-white/80">{description}</p>
         </div>
 

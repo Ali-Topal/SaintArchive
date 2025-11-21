@@ -10,6 +10,7 @@ import { createSupabaseServerClient } from "@/lib/supabaseClient";
 type RaffleBySlug = {
   id: string;
   title: string;
+  color: string | null;
   description: string;
   brand: string | null;
   image_url: string | null;
@@ -35,7 +36,7 @@ export default async function RaffleDetailPage({ params }: PageProps) {
   const { data: raffleBySlug, error: slugError } = await supabase
     .from("raffles")
     .select(
-      "id,title,description,brand,image_url,image_urls,ticket_price_cents,closes_at,status,winner_email,winner_instagram_handle,max_entries_per_user"
+      "id,title,color,description,brand,image_url,image_urls,ticket_price_cents,closes_at,status,winner_email,winner_instagram_handle,max_entries_per_user"
     )
     .eq("slug", slug)
     .maybeSingle<RaffleBySlug>();
@@ -46,7 +47,7 @@ export default async function RaffleDetailPage({ params }: PageProps) {
     const { data: raffleById, error: idError } = await supabase
       .from("raffles")
       .select(
-        "id,title,description,brand,image_url,image_urls,ticket_price_cents,closes_at,status,winner_email,winner_instagram_handle,max_entries_per_user"
+        "id,title,color,description,brand,image_url,image_urls,ticket_price_cents,closes_at,status,winner_email,winner_instagram_handle,max_entries_per_user"
       )
       .eq("id", slug)
       .maybeSingle<RaffleBySlug>();
@@ -128,7 +129,14 @@ export default async function RaffleDetailPage({ params }: PageProps) {
             <p className="text-xs uppercase tracking-[0.3em] text-white/60">
               Drop
             </p>
-            <h1 className="text-3xl font-semibold text-white">{raffle.title}</h1>
+            <div>
+              <h1 className="text-3xl font-semibold text-white">{raffle.title}</h1>
+              {raffle.color && (
+                <p className="text-sm uppercase tracking-[0.3em] text-white/60">
+                  {raffle.color}
+                </p>
+              )}
+            </div>
             <p className="text-base text-white/80">{introCopy}</p>
           </div>
 
