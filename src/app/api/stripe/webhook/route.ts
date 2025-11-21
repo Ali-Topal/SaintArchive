@@ -61,6 +61,7 @@ export async function POST(request: Request) {
   const ticketCount = ticketCountRaw ? Number(ticketCountRaw) : NaN;
   const size = session.metadata?.size?.toUpperCase() ?? null;
   const raffleTitle = session.metadata?.raffleTitle ?? "Your raffle";
+  const raffleImage = session.metadata?.raffleImage ?? null;
   const email =
     session.metadata?.email ??
     session.customer_details?.email ??
@@ -136,6 +137,7 @@ export async function POST(request: Request) {
         ticketCount,
         size,
         shippingDetails,
+        raffleImage: raffleImage ?? undefined,
       });
     } catch (emailError) {
       console.error("[stripe-webhook] Email send failed:", emailError);

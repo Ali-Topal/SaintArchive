@@ -22,6 +22,8 @@ type RaffleRow = {
   closes_at: string | null;
   ticket_price_cents: number;
   max_entries_per_user: number | null;
+  image_url: string | null;
+  image_urls: string[] | null;
 };
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -79,7 +81,9 @@ export async function POST(request: Request) {
     error: raffleError,
   } = await supabase
     .from("raffles")
-    .select("id,title,status,closes_at,ticket_price_cents,max_entries_per_user")
+    .select(
+      "id,title,status,closes_at,ticket_price_cents,max_entries_per_user,image_url,image_urls"
+    )
     .eq("id", raffleId)
     .single<RaffleRow>();
 
@@ -124,6 +128,9 @@ export async function POST(request: Request) {
     );
   }
 
+  const displayImage =
+    raffle.image_urls?.[0] ?? raffle.image_url ?? undefined;
+
   try {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -147,6 +154,7 @@ export async function POST(request: Request) {
             unit_amount: raffle.ticket_price_cents,
             product_data: {
               name: raffle.title,
+              images: displayImage ? [displayImage] : undefined,
             },
           },
           quantity: ticketCount,
@@ -158,6 +166,7 @@ export async function POST(request: Request) {
         email,
         size,
         raffleTitle: raffle.title,
+        raffleImage: displayImage ?? "",
       },
       success_url: `${baseUrl}/thank-you?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/raffles/${raffleId}`,

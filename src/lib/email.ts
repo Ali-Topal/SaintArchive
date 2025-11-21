@@ -15,6 +15,7 @@ type SendOrderConfirmationEmailParams = {
   ticketCount: number;
   size: string;
   shippingDetails: ShippingDetails;
+  raffleImage?: string | null;
 };
 
 const resend = new Resend(process.env.RESEND_API_KEY!);
@@ -41,6 +42,12 @@ const template = `
               Thank you for entering the raffle.<br />
               Your entry has been successfully confirmed.
             </p>
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            <img src="{{raffleImage}}" alt="Raffle Item" width="100%" style="border-radius:10px;margin-bottom:20px;" />
           </td>
         </tr>
 
@@ -133,6 +140,7 @@ export async function sendOrderConfirmationEmail({
   ticketCount,
   size,
   shippingDetails,
+  raffleImage,
 }: SendOrderConfirmationEmailParams) {
   if (!process.env.RESEND_API_KEY) {
     console.warn("[email] RESEND_API_KEY is not configured. Skipping email send.");
@@ -146,6 +154,7 @@ export async function sendOrderConfirmationEmail({
     .replace(/{{raffleTitle}}/g, raffleTitle)
     .replace(/{{ticketCount}}/g, String(ticketCount))
     .replace(/{{size}}/g, size)
+    .replace(/{{raffleImage}}/g, raffleImage || "")
     .replace(/{{shipping_name}}/g, shippingDetails.name || "")
     .replace(/{{shipping_address}}/g, shippingDetails.address || "")
     .replace(/{{shipping_city}}/g, shippingDetails.city || "")
