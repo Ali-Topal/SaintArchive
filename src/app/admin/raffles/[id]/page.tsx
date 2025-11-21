@@ -319,9 +319,22 @@ export default async function ManageRafflePage({
     notFound();
   }
 
-  const { data: entries } = await supabase
+  const {
+    data: entries,
+  }: {
+    data:
+      | Array<{
+          id: string;
+          email: string;
+          instagram_handle: string | null;
+          ticket_count: number;
+          created_at: string;
+          stripe_session_id: string | null;
+        }>
+      | null;
+  } = await supabase
     .from("entries")
-    .select("id,email,ticket_count,created_at,stripe_session_id")
+    .select("id,email,instagram_handle,ticket_count,created_at,stripe_session_id")
     .eq("raffle_id", id)
     .order("created_at", { ascending: false });
 
