@@ -15,9 +15,9 @@ export default function OptionsInput({
   label = "Options",
   placeholder = "e.g. UK 8",
 }: OptionsInputProps) {
-  const [options, setOptions] = useState(
-    initialOptions.filter(Boolean).map((value) => value.trim())
-  );
+  const sanitizedInitial =
+    initialOptions?.map((value) => value?.trim()).filter((value) => !!value) ?? [];
+  const [options, setOptions] = useState(sanitizedInitial);
   const [inputValue, setInputValue] = useState("");
 
   const addOption = () => {
