@@ -3,20 +3,8 @@ import { redirect } from "next/navigation";
 import ImageUploaderList from "@/components/ImageUploaderField";
 import { createSupabaseServerClient } from "@/lib/supabaseClient";
 
-type NewRafflePageProps = {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-};
-
-const ADMIN_KEY = process.env.ADMIN_KEY;
-
 async function createRaffle(formData: FormData) {
   "use server";
-
-  const key = formData.get("adminKey")?.toString();
-
-  if (!ADMIN_KEY || key !== ADMIN_KEY) {
-    throw new Error("Unauthorized");
-  }
 
   const title = formData.get("title")?.toString().trim() ?? "";
   const rawSlug = formData.get("slug")?.toString().trim() ?? "";
@@ -113,24 +101,10 @@ async function createRaffle(formData: FormData) {
   revalidatePath("/admin");
   revalidatePath("/winners");
 
-  redirect(`/admin?key=${key}`);
+  redirect("/admin");
 }
 
-export default async function NewRafflePage({
-  searchParams,
-}: NewRafflePageProps) {
-  const params = await searchParams;
-  const providedKey =
-    typeof params?.key === "string" ? params.key : undefined;
-
-  if (!ADMIN_KEY || providedKey !== ADMIN_KEY) {
-    return (
-      <section className="flex min-h-[50vh] items-center justify-center text-sm uppercase tracking-[0.4em] text-muted">
-        Unauthorized
-      </section>
-    );
-  }
-
+export default async function NewRafflePage() {
   return (
     <section className="space-y-10 py-16">
       <div>
@@ -146,7 +120,6 @@ export default async function NewRafflePage({
         action={createRaffle}
         className="space-y-6 rounded-3xl border border-white/10 bg-white/5 p-8"
       >
-        <input type="hidden" name="adminKey" value={providedKey} />
         <div className="grid gap-4 md:grid-cols-2">
           <label className="space-y-2 text-sm">
             <span className="text-muted uppercase tracking-[0.3em]">
@@ -200,7 +173,6 @@ export default async function NewRafflePage({
           </p>
           <ImageUploaderList
             name="image_urls"
-            adminKey={providedKey}
             initialUrls={[]}
           />
         </div>

@@ -1,17 +1,11 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-const ADMIN_KEY = process.env.ADMIN_KEY;
 const STORAGE_BUCKET = process.env.SUPABASE_STORAGE_BUCKET ?? "raffles";
 
 export async function POST(request: Request) {
   const formData = await request.formData();
-  const adminKey = formData.get("adminKey")?.toString();
   const file = formData.get("file");
-
-  if (!ADMIN_KEY || adminKey !== ADMIN_KEY) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
 
   if (!(file instanceof File)) {
     return NextResponse.json(

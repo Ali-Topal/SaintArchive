@@ -2,12 +2,6 @@ import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabaseClient";
 
-type AdminPageProps = {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-};
-
-const ADMIN_KEY = process.env.ADMIN_KEY;
-
 const formatDate = (value: string | null) => {
   if (!value) return "TBA";
   const date = new Date(value);
@@ -23,13 +17,8 @@ const formatDate = (value: string | null) => {
 async function updateRaffleStatus(formData: FormData) {
   "use server";
 
-  const key = formData.get("adminKey")?.toString();
   const raffleId = formData.get("raffleId")?.toString();
   const status = formData.get("status")?.toString();
-
-  if (!ADMIN_KEY || key !== ADMIN_KEY) {
-    throw new Error("Unauthorized");
-  }
 
   if (!raffleId || !status) {
     throw new Error("Missing parameters");
@@ -50,19 +39,7 @@ async function updateRaffleStatus(formData: FormData) {
   revalidatePath("/admin");
 }
 
-export default async function AdminPage({ searchParams }: AdminPageProps) {
-  const params = await searchParams;
-  const providedKey =
-    typeof params?.key === "string" ? params.key : undefined;
-
-  if (!ADMIN_KEY || providedKey !== ADMIN_KEY) {
-    return (
-      <section className="flex min-h-[50vh] items-center justify-center text-sm uppercase tracking-[0.4em] text-muted">
-        Unauthorized
-      </section>
-    );
-  }
-
+export default async function AdminPage() {
   const supabase = await createSupabaseServerClient();
   const { data: raffles, error } = await supabase
     .from("raffles")
@@ -86,7 +63,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           </h1>
         </div>
         <Link
-          href={`/admin/raffles/new?key=${providedKey}`}
+          href="/admin/raffles/new"
           className="inline-flex items-center justify-center rounded-full border border-accent px-6 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-accent transition hover:bg-accent/10"
         >
           New Raffle
@@ -119,7 +96,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   </Link>
                 )}
                 <Link
-                  href={`/admin/raffles/${raffle.id}?key=${providedKey}`}
+                  href={`/admin/raffles/${raffle.id}`}
                   className="text-xs uppercase tracking-[0.3em] text-foreground underline-offset-4 hover:underline"
                 >
                   Manage raffle
@@ -131,7 +108,6 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               action={updateRaffleStatus}
               className="mt-4 flex flex-wrap gap-3"
             >
-              <input type="hidden" name="adminKey" value={providedKey} />
               <input type="hidden" name="raffleId" value={raffle.id} />
               {raffle.status !== "draft" && (
                 <button

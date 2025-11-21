@@ -4,11 +4,8 @@ import { revalidatePath } from "next/cache";
 import ImageUploaderList from "@/components/ImageUploaderField";
 import { createSupabaseServerClient } from "@/lib/supabaseClient";
 
-const ADMIN_KEY = process.env.ADMIN_KEY;
-
 type PageProps = {
   params: Promise<{ id: string }>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 const formatDateTime = (value: string | null) => {
@@ -20,11 +17,6 @@ const formatDateTime = (value: string | null) => {
 
 async function updateRaffleAction(formData: FormData) {
   "use server";
-
-  const key = formData.get("adminKey")?.toString();
-  if (!ADMIN_KEY || key !== ADMIN_KEY) {
-    throw new Error("Unauthorized");
-  }
 
   const raffleId = formData.get("raffleId")?.toString();
   if (!raffleId) {
@@ -137,11 +129,6 @@ async function updateRaffleAction(formData: FormData) {
 async function updateWinnerAction(formData: FormData) {
   "use server";
 
-  const key = formData.get("adminKey")?.toString();
-  if (!ADMIN_KEY || key !== ADMIN_KEY) {
-    throw new Error("Unauthorized");
-  }
-
   const raffleId = formData.get("raffleId")?.toString();
   if (!raffleId) {
     throw new Error("Missing raffle id");
@@ -169,11 +156,6 @@ async function updateWinnerAction(formData: FormData) {
 
 async function setWinnerFromEntryAction(formData: FormData) {
   "use server";
-
-  const key = formData.get("adminKey")?.toString();
-  if (!ADMIN_KEY || key !== ADMIN_KEY) {
-    throw new Error("Unauthorized");
-  }
 
   const raffleId = formData.get("raffleId")?.toString();
   const entryId = formData.get("entryId")?.toString();
@@ -212,11 +194,6 @@ async function setWinnerFromEntryAction(formData: FormData) {
 
 async function addManualEntryAction(formData: FormData) {
   "use server";
-
-  const key = formData.get("adminKey")?.toString();
-  if (!ADMIN_KEY || key !== ADMIN_KEY) {
-    throw new Error("Unauthorized");
-  }
 
   const raffleId = formData.get("raffleId")?.toString();
   const raffleSlug = formData.get("raffleSlug")?.toString();
@@ -259,11 +236,6 @@ async function addManualEntryAction(formData: FormData) {
 async function removeEntryAction(formData: FormData) {
   "use server";
 
-  const key = formData.get("adminKey")?.toString();
-  if (!ADMIN_KEY || key !== ADMIN_KEY) {
-    throw new Error("Unauthorized");
-  }
-
   const entryId = formData.get("entryId")?.toString();
   const raffleSlug = formData.get("raffleSlug")?.toString();
 
@@ -284,23 +256,8 @@ async function removeEntryAction(formData: FormData) {
   }
 }
 
-export default async function ManageRafflePage({
-  params,
-  searchParams,
-}: PageProps) {
+export default async function ManageRafflePage({ params }: PageProps) {
   const { id } = await params;
-  const sp = await searchParams;
-  const providedKey =
-    typeof sp?.key === "string" ? sp.key : undefined;
-
-  if (!ADMIN_KEY || providedKey !== ADMIN_KEY) {
-    return (
-      <section className="flex min-h-[50vh] items-center justify-center text-sm uppercase tracking-[0.4em] text-muted">
-        Unauthorized
-      </section>
-    );
-  }
-
   const supabase = await createSupabaseServerClient();
 
   const { data: raffle, error } = await supabase
@@ -342,7 +299,7 @@ export default async function ManageRafflePage({
     <section className="space-y-10 py-16">
       <div className="flex flex-col gap-2">
         <Link
-          href={`/admin?key=${providedKey}`}
+          href="/admin"
           className="text-xs uppercase tracking-[0.3em] text-muted underline-offset-4 hover:underline"
         >
           ← Back to admin
@@ -359,7 +316,6 @@ export default async function ManageRafflePage({
         action={updateRaffleAction}
         className="space-y-6 rounded-3xl border border-white/10 bg-white/5 p-8"
       >
-        <input type="hidden" name="adminKey" value={providedKey} />
         <input type="hidden" name="raffleId" value={raffle.id} />
         <div className="grid gap-4 md:grid-cols-2">
           <label className="space-y-2 text-sm">
@@ -415,17 +371,16 @@ export default async function ManageRafflePage({
           <p className="text-xs uppercase tracking-[0.3em] text-muted">
             Gallery images
           </p>
-          <ImageUploaderList
-            name="image_urls"
-            adminKey={providedKey}
-            initialUrls={
-              raffle.image_urls && raffle.image_urls.length > 0
-                ? raffle.image_urls
-                : raffle.image_url
-                ? [raffle.image_url]
-                : []
-            }
-          />
+            <ImageUploaderList
+              name="image_urls"
+              initialUrls={
+                raffle.image_urls && raffle.image_urls.length > 0
+                  ? raffle.image_urls
+                  : raffle.image_url
+                    ? [raffle.image_url]
+                    : []
+              }
+            />
         </div>
         <label className="space-y-2 text-sm">
             <span className="text-muted uppercase tracking-[0.3em]">
@@ -516,7 +471,6 @@ export default async function ManageRafflePage({
         action={updateWinnerAction}
         className="space-y-4 rounded-3xl border border-white/10 bg-white/5 p-8"
       >
-        <input type="hidden" name="adminKey" value={providedKey} />
         <input type="hidden" name="raffleId" value={raffle.id} />
         <p className="text-sm uppercase tracking-[0.4em] text-muted">
           Winner details
@@ -558,7 +512,6 @@ export default async function ManageRafflePage({
                   action={addManualEntryAction}
                   className="grid gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 md:grid-cols-[2fr_1fr_1fr_auto]"
                 >
-                  <input type="hidden" name="adminKey" value={providedKey} />
                   <input type="hidden" name="raffleId" value={raffle.id} />
                   <input type="hidden" name="raffleSlug" value={raffle.slug ?? ""} />
                   <label className="space-y-2 text-sm">
@@ -636,7 +589,6 @@ export default async function ManageRafflePage({
                     Session: {entry.stripe_session_id ?? "—"}
                   </span>
                   <form action={setWinnerFromEntryAction}>
-                    <input type="hidden" name="adminKey" value={providedKey} />
                     <input type="hidden" name="raffleId" value={raffle.id} />
                     <input type="hidden" name="entryId" value={entry.id} />
                     <button
@@ -647,7 +599,6 @@ export default async function ManageRafflePage({
                     </button>
                   </form>
                   <form action={removeEntryAction}>
-                    <input type="hidden" name="adminKey" value={providedKey} />
                     <input type="hidden" name="entryId" value={entry.id} />
                     <input type="hidden" name="raffleSlug" value={raffle.slug ?? ""} />
                     <button

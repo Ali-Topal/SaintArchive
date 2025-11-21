@@ -6,13 +6,11 @@ import { useRef, useState } from "react";
 
 type ImageUploaderListProps = {
   name: string;
-  adminKey?: string;
   initialUrls?: string[];
 };
 
 export default function ImageUploaderList({
   name,
-  adminKey = "",
   initialUrls = [],
 }: ImageUploaderListProps) {
   const [urls, setUrls] = useState(initialUrls);
@@ -26,7 +24,6 @@ export default function ImageUploaderList({
     try {
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("adminKey", adminKey);
 
       const response = await fetch("/api/uploads", {
         method: "POST",
