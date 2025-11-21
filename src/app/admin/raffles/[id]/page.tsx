@@ -245,6 +245,52 @@ async function addManualEntryAction(formData: FormData) {
   }
 }
 
+async function generateRandomEntriesAction(formData: FormData) {
+  "use server";
+
+  const raffleId = formData.get("raffleId")?.toString();
+  const raffleSlug = formData.get("raffleSlug")?.toString();
+  const countRaw = formData.get("entry_count")?.toString();
+  const count = countRaw ? Number(countRaw) : NaN;
+
+  if (!raffleId || !Number.isFinite(count) || count < 1 || count > 1000) {
+    throw new Error("Enter a valid amount (1-1000).");
+  }
+
+  const supabase = supabaseAdmin();
+  const now = Date.now();
+  const entriesPayload = Array.from({ length: count }).map((_, idx) => {
+    const unique = `${now}-${idx}-${Math.floor(Math.random() * 1_000_000)}`;
+    return {
+      raffle_id: raffleId,
+      email: `auto-${unique}@saintarchive.test`,
+      instagram_handle: `auto_${unique}`,
+      ticket_count: Math.max(1, Math.floor(Math.random() * 5) + 1),
+      stripe_session_id: `auto-${unique}`,
+      stripe_customer_id: null,
+      stripe_payment_intent_id: null,
+    };
+  });
+
+  const { error } = await supabase.from("entries").insert(entriesPayload);
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/admin");
+  if (raffleSlug) {
+    revalidatePath(`/raffles/${raffleSlug}`);
+  }
+  const cookieStore = await cookies();
+  cookieStore.set({
+    name: "admin-toast",
+    value: `generated-${count}`,
+    path: `/admin/raffles/${raffleId}`,
+    maxAge: 10,
+  });
+  redirect(`/admin/raffles/${raffleId}`);
+}
+
 async function removeEntryAction(formData: FormData) {
   "use server";
 
@@ -273,7 +319,9 @@ export default async function ManageRafflePage({ params }: PageProps) {
   const supabase = supabaseAdmin();
   const cookieStore = await cookies();
   const toastCookie = cookieStore.get("admin-toast");
-  const showSuccessToast = toastCookie?.value === "saved";
+  const toastValue = toastCookie?.value ?? null;
+  const showSuccessToast =
+    toastValue === "saved" || (toastValue?.startsWith("generated-") ?? false);
 
   const { data: raffle, error } = await supabase
     .from("raffles")
@@ -313,7 +361,14 @@ export default async function ManageRafflePage({ params }: PageProps) {
   return (
     <>
       {showSuccessToast && (
-        <Toast message="Changes saved" cookiePath={`/admin/raffles/${raffle.id}`} />
+        <Toast
+          message={
+            toastValue?.startsWith("generated-")
+              ? `Generated ${toastValue.split("-")[1]} entries`
+              : "Changes saved"
+          }
+          cookiePath={`/admin/raffles/${raffle.id}`}
+        />
       )}
       <section className="space-y-10 py-16">
       <div className="flex flex-col gap-2">
@@ -587,6 +642,32 @@ export default async function ManageRafflePage({ params }: PageProps) {
                     Add entry
                   </button>
                 </form>
+        <form
+          action={generateRandomEntriesAction}
+          className="grid gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 md:grid-cols-[2fr_auto]"
+        >
+          <input type="hidden" name="raffleId" value={raffle.id} />
+          <input type="hidden" name="raffleSlug" value={raffle.slug ?? ""} />
+          <label className="space-y-2 text-sm">
+            <span className="text-muted uppercase tracking-[0.3em]">
+              Generate entries
+            </span>
+            <input
+              type="number"
+              min={1}
+              max={1000}
+              name="entry_count"
+              defaultValue={50}
+              className="w-full rounded-2xl border border-white/15 bg-transparent px-4 py-3 text-foreground focus:border-accent focus:outline-none"
+            />
+          </label>
+          <button
+            type="submit"
+            className="self-end rounded-full border border-accent px-6 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-accent transition duration-200 hover:bg-accent/10 active:scale-95"
+          >
+            Generate
+          </button>
+        </form>
         {entries && entries.length > 0 ? (
           <div className="space-y-3">
             {entries.map((entry) => (

@@ -57,7 +57,10 @@ export default function NewsletterForm({ showHeading = true }: NewsletterFormPro
           </h3>
         </>
       )}
-      <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-3 sm:flex-row">
+      <form
+        onSubmit={handleSubmit}
+        className="mt-6 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center"
+      >
         <input
           type="email"
           required
