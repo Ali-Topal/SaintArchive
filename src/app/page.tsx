@@ -8,7 +8,7 @@ import NewsletterForm from "@/components/NewsletterForm";
 import RaffleGrid from "@/components/RaffleGrid";
 import RaffleHero from "@/components/RaffleHero";
 import RaffleTeaserLocked from "@/components/RaffleTeaserLocked";
-import BrandFilter from "@/components/BrandFilter";
+import Filters from "@/components/Filters";
 import { createSupabaseServerClient } from "@/lib/supabaseClient";
 
 export const revalidate = 0;
@@ -94,29 +94,50 @@ export default async function HomePage({
   const params =
     searchParams !== undefined ? await searchParams : ({} as Record<string, string | string[] | undefined>);
   const rawParam = params.brand;
-  const selectedBrandRaw = Array.isArray(rawParam)
-    ? rawParam[0]
-    : rawParam;
-  const normalizedBrand = selectedBrandRaw?.toLowerCase();
+  const requestedBrands = Array.isArray(rawParam)
+    ? rawParam
+    : rawParam
+      ? rawParam.split(",")
+      : [];
+
+  const brandLookup = new Map(
+    availableBrands.map((brand) => [brand.toLowerCase(), brand])
+  );
+  const selectedBrands: string[] = [];
+  const seenBrands = new Set<string>();
+
+  requestedBrands.forEach((entry) => {
+    const cleaned = entry?.trim();
+    if (!cleaned) {
+      return;
+    }
+    const normalized = cleaned.toLowerCase();
+    if (seenBrands.has(normalized)) {
+      return;
+    }
+    seenBrands.add(normalized);
+    selectedBrands.push(brandLookup.get(normalized) ?? cleaned);
+  });
+
+  const selectedBrandSet = new Set(selectedBrands.map((brand) => brand.toLowerCase()));
   const filteredRaffles =
-    normalizedBrand && activeRaffles.length
-      ? activeRaffles.filter(
-          (raffle) =>
-            raffle.brand?.toLowerCase() === normalizedBrand
-        )
+    selectedBrandSet.size > 0
+      ? activeRaffles.filter((raffle) => {
+          if (!raffle.brand) {
+            return false;
+          }
+          return selectedBrandSet.has(raffle.brand.toLowerCase());
+        })
       : activeRaffles;
 
   if (!filteredRaffles || filteredRaffles.length === 0) {
     return (
       <div className="space-y-10">
-        <BrandFilter
-          brands={availableBrands}
-          activeBrand={selectedBrandRaw}
-        />
+        <Filters availableBrands={availableBrands} selectedBrands={selectedBrands} />
         <section className="flex min-h-[40vh] items-center justify-center rounded-[32px] border border-white/10 bg-white/5/20 px-8 py-16 text-center">
           <p className="text-base uppercase tracking-[0.4em] text-muted">
-            {selectedBrandRaw
-              ? `No active drops for ${selectedBrandRaw}`
+            {selectedBrands.length
+              ? `No active drops for ${selectedBrands.join(", ")}`
               : "No active drop right now. Follow @saintarchive88 for the next one."}
           </p>
         </section>
@@ -203,7 +224,7 @@ export default async function HomePage({
 
   return (
     <div className="space-y-16">
-      <BrandFilter brands={availableBrands} activeBrand={selectedBrandRaw} />
+      <Filters availableBrands={availableBrands} selectedBrands={selectedBrands} />
       <RaffleHero
         raffleId={heroRaffle.id}
         title={heroRaffle.title}
