@@ -12,10 +12,11 @@ type SendOrderConfirmationEmailParams = {
   email: string;
   raffleId: string;
   raffleTitle: string;
+  productName: string;
   ticketCount: number;
-  selectedOption?: string;
+  size?: string;
   shippingDetails: ShippingDetails;
-  raffleImage?: string | null;
+  emailImageUrl: string;
 };
 
 const resend = new Resend(process.env.RESEND_API_KEY!);
@@ -69,10 +70,11 @@ const template = `
           <tr>
             <td>
               <img 
-                src="{{raffleImage}}" 
-                alt="Raffle Item" 
-                width="100%" 
-                style="border-radius:12px; display:block; margin-bottom:25px;" 
+                src="{{emailImageUrl}}" 
+                alt="{{productName}}" 
+                width="600" 
+                height="600"
+                style="border-radius:12px; display:block; margin:20px auto;" 
               />
             </td>
           </tr>
@@ -94,7 +96,7 @@ const template = `
                   </td>
                 </tr>
 
-              {{optionSection}}
+              {{sizeSection}}
 
                 <!-- SHIPPING DETAILS -->
                 <tr>
@@ -157,10 +159,11 @@ export async function sendOrderConfirmationEmail({
   email,
   raffleId,
   raffleTitle,
+  productName,
   ticketCount,
-  selectedOption,
+  size,
   shippingDetails,
-  raffleImage,
+  emailImageUrl,
 }: SendOrderConfirmationEmailParams) {
   if (!process.env.RESEND_API_KEY) {
     console.warn("[email] RESEND_API_KEY is not configured. Skipping email send.");
@@ -170,22 +173,23 @@ export async function sendOrderConfirmationEmail({
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, "") ?? "https://saintarchive.com";
   const raffleLink = `${baseUrl}/raffles/${raffleId}`;
 
-  const optionSection = selectedOption
+  const sizeSection = size
     ? `
               <tr>
                 <td style="font-size:15px; color:#000; padding-bottom:6px;">
-                  <strong>Option:</strong> {{selectedOption}}
+                  <strong>Size:</strong> {{size}}
                 </td>
               </tr>
             `
     : "";
 
   const html = template
-    .replace(/{{raffleImage}}/g, raffleImage || "")
+    .replace(/{{emailImageUrl}}/g, emailImageUrl || "")
+    .replace(/{{productName}}/g, productName || "")
     .replace(/{{raffleTitle}}/g, raffleTitle || "")
     .replace(/{{ticketCount}}/g, String(ticketCount || ""))
-    .replace(/{{optionSection}}/g, optionSection)
-    .replace(/{{selectedOption}}/g, selectedOption || "")
+    .replace(/{{sizeSection}}/g, sizeSection)
+    .replace(/{{size}}/g, size || "")
     .replace(/{{shipping_name}}/g, shippingDetails.name || "")
     .replace(/{{shipping_address}}/g, shippingDetails.address || "")
     .replace(/{{shipping_city}}/g, shippingDetails.city || "")

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
+import path from "node:path";
+import { access } from "node:fs/promises";
 import { stripe } from "@/lib/stripe";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { sendOrderConfirmationEmail } from "@/lib/email";
@@ -56,7 +58,6 @@ export async function POST(request: Request) {
   const ticketCount = ticketCountRaw ? Number(ticketCountRaw) : NaN;
   const selectedOption = session.metadata?.selectedOption ?? "";
   const raffleTitle = session.metadata?.raffleTitle ?? "Your raffle";
-  const raffleImage = session.metadata?.raffleImage ?? null;
   const instagramHandle = session.metadata?.instagramHandle ?? null;
   const email =
     session.metadata?.email ??
@@ -127,15 +128,32 @@ export async function POST(request: Request) {
       );
     }
 
+    const emailImageUrl = `https://www.saintarchive.co.uk/email-images/${raffleId}.webp`;
+    const emailImagePath = path.join(
+      process.cwd(),
+      "public",
+      "email-images",
+      `${raffleId}.webp`
+    );
+
+    try {
+      await access(emailImagePath);
+    } catch (fsError) {
+      console.warn(
+        `[stripe-webhook] Email image missing for raffle ${raffleId}: ${emailImagePath}`
+      );
+    }
+
     try {
       await sendOrderConfirmationEmail({
         email,
         raffleTitle,
         raffleId,
         ticketCount,
-        selectedOption: selectedOption || undefined,
+        size: selectedOption || undefined,
         shippingDetails,
-        raffleImage: raffleImage ?? undefined,
+        emailImageUrl,
+        productName: raffleTitle,
       });
     } catch (emailError) {
       console.error("[stripe-webhook] Email send failed:", emailError);

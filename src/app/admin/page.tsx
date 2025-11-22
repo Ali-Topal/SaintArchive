@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import CopyButton from "@/components/CopyButton";
 
 const formatDate = (value: string | null) => {
   if (!value) return "TBA";
@@ -96,6 +97,10 @@ export default async function AdminPage() {
                     <p className="text-xs uppercase tracking-[0.4em] text-muted">
                       Status: {raffle.status} · Priority: {raffle.sort_priority ?? "—"}
                     </p>
+                    <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[0.4em] text-white/40">
+                      <span>ID: {raffle.id}</span>
+                      <CopyButton text={raffle.id} />
+                    </div>
                   </div>
                 </div>
                 <div className="flex flex-col gap-2 text-sm text-foreground/80 sm:items-end">

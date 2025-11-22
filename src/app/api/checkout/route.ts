@@ -174,7 +174,6 @@ export async function POST(request: Request) {
         email,
         selectedOption: optionList.length > 0 ? selectedOption : "",
         raffleTitle: raffle.title,
-        raffleImage: displayImage ?? "",
         instagramHandle,
       },
       success_url: `${baseUrl}/thank-you?session_id={CHECKOUT_SESSION_ID}`,

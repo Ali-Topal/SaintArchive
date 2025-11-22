@@ -6,8 +6,9 @@ export async function GET() {
     email: "test@example.com",
     raffleTitle: "Test Raffle",
     raffleId: "test123",
+    productName: "Test Raffle",
     ticketCount: 1,
-    selectedOption: "Test Option",
+    size: "Test Option",
     shippingDetails: {
       name: "Test User",
       address: "123 Test Street",
@@ -15,7 +16,7 @@ export async function GET() {
       postcode: "E1 1AA",
       country: "UK",
     },
-    raffleImage: "https://via.placeholder.com/600x400",
+    emailImageUrl: "https://www.saintarchive.co.uk/email-images/test123.webp",
   });
 
   return NextResponse.json({ status: "sent" });
