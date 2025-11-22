@@ -455,7 +455,7 @@ export default async function ManageRafflePage({ params }: PageProps) {
     .eq("raffle_id", id)
     .order("created_at", { ascending: false });
 
-  const sizeOptions = raffle.options ?? [];
+  const sizeOptions = (raffle.options ?? []) as string[];
 
   return (
     <>

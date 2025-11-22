@@ -75,6 +75,7 @@ export default function Filters({ groups, selected }: FiltersProps) {
     const params = new URLSearchParams(searchParams.toString());
     params.delete(key);
     values.forEach((value) => params.append(key, value));
+    params.delete("page");
 
     const query = params.toString();
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
@@ -95,6 +96,7 @@ export default function Filters({ groups, selected }: FiltersProps) {
   const handleClearAll = () => {
     const params = new URLSearchParams(searchParams.toString());
     groups.forEach((group) => params.delete(group.key));
+    params.delete("page");
     const query = params.toString();
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
   };

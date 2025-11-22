@@ -77,12 +77,52 @@ type RaffleListProps = {
 export default async function RaffleList({ searchParams = {} }: RaffleListProps) {
   const supabase = await createSupabaseServerClient();
   const filters = buildFilterInput(searchParams);
-  const { raffles: activeRaffles, availableBrands, appliedFilters } =
-    await getFilteredRaffles(filters, supabase);
+  const rawPageParam = searchParams.page;
+  const pageParam = Array.isArray(rawPageParam) ? rawPageParam[0] : rawPageParam;
+  const requestedPage = pageParam ? Number(pageParam) : 1;
+  const pageNumber = Number.isFinite(requestedPage) && requestedPage > 0 ? Math.floor(requestedPage) : 1;
+  const pageSize = 9;
+
+  const {
+    raffles: activeRaffles,
+    availableBrands,
+    appliedFilters,
+    totalCount,
+    totalPages,
+    page: currentPage,
+    pageSize: resolvedPageSize,
+  } = await getFilteredRaffles(filters, pageNumber, pageSize, supabase);
 
   const selectedFilters = {
     brand: appliedFilters.brand ?? [],
   };
+
+  const buildPageHref = (targetPage: number) => {
+    const params = new URLSearchParams();
+    Object.entries(searchParams).forEach(([key, value]) => {
+      if (!value || key === "page") {
+        return;
+      }
+      if (Array.isArray(value)) {
+        value.forEach((entry) => params.append(key, entry));
+      } else {
+        params.append(key, value);
+      }
+    });
+
+    if (targetPage > 1) {
+      params.set("page", String(targetPage));
+    }
+
+    const query = params.toString();
+    return query ? `/?${query}` : "/";
+  };
+
+  const hasPrevPage = currentPage > 1;
+  const hasNextPage = currentPage < totalPages;
+  const firstItemIndex = totalCount === 0 ? 0 : (currentPage - 1) * resolvedPageSize + 1;
+  const lastItemIndex =
+    totalCount === 0 ? 0 : Math.min(totalCount, currentPage * resolvedPageSize);
 
   if (!activeRaffles.length) {
     return (
@@ -317,6 +357,37 @@ export default async function RaffleList({ searchParams = {} }: RaffleListProps)
             );
           })}
         </section>
+      )}
+
+      {totalPages > 1 && (
+        <nav className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs uppercase tracking-[0.3em] text-muted">
+            Showing {firstItemIndex}-{lastItemIndex} of {totalCount}
+          </p>
+          <div className="flex items-center gap-2">
+            <Link
+              href={buildPageHref(currentPage - 1)}
+              aria-disabled={!hasPrevPage}
+              className={`rounded-full border border-white/20 px-4 py-2 text-xs uppercase tracking-[0.3em] text-white transition hover:border-white/60 ${
+                hasPrevPage ? "" : "pointer-events-none opacity-40"
+              }`}
+            >
+              Previous
+            </Link>
+            <span className="text-xs uppercase tracking-[0.3em] text-muted">
+              Page {currentPage} of {totalPages}
+            </span>
+            <Link
+              href={buildPageHref(currentPage + 1)}
+              aria-disabled={!hasNextPage}
+              className={`rounded-full border border-white/20 px-4 py-2 text-xs uppercase tracking-[0.3em] text-white transition hover:border-white/60 ${
+                hasNextPage ? "" : "pointer-events-none opacity-40"
+              }`}
+            >
+              Next
+            </Link>
+          </div>
+        </nav>
       )}
 
       {latestWinner?.raffle && (

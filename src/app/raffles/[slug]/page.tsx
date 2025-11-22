@@ -91,6 +91,11 @@ export default async function RaffleDetailPage({ params }: PageProps) {
   }
   const entriesCount = Number(entryRows?.[0]?.total ?? 0);
   const winnersList = raffle.winners ?? [];
+  const fallbackWinnerText =
+    winnersList.length === 0 &&
+    (raffle.winner_email || raffle.winner_instagram_handle)
+      ? formatWinner(raffle.winner_instagram_handle, raffle.winner_email)
+      : null;
 
   const displayImages =
     raffle.image_urls && raffle.image_urls.length > 0
@@ -275,6 +280,11 @@ export default async function RaffleDetailPage({ params }: PageProps) {
                 </p>
               </div>
             ))}
+          </div>
+        ) : fallbackWinnerText ? (
+          <div className="text-white">
+            <p className="text-lg font-semibold">{fallbackWinnerText}</p>
+            <p className="text-sm text-white/60">Closed {closesDisplay}</p>
           </div>
         ) : (
           <p className="text-sm text-white/70">
