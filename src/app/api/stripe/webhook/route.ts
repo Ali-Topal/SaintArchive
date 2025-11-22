@@ -56,6 +56,17 @@ export async function POST(request: Request) {
   const raffleId = session.metadata?.raffleId ?? null;
   const ticketCountRaw = session.metadata?.ticketCount ?? null;
   const ticketCount = ticketCountRaw ? Number(ticketCountRaw) : NaN;
+  const entriesCountRaw =
+    session.metadata?.entries ??
+    session.metadata?.entriesCount ??
+    session.metadata?.ticketCount ??
+    null;
+  const parsedEntries = entriesCountRaw ? Number(entriesCountRaw) : NaN;
+  const entriesCount = Number.isFinite(parsedEntries)
+    ? parsedEntries
+    : Number.isFinite(ticketCount)
+      ? ticketCount
+      : 1;
   const selectedOption = session.metadata?.selectedOption ?? "";
   const raffleTitle = session.metadata?.raffleTitle ?? "Your raffle";
   const instagramHandle = session.metadata?.instagramHandle ?? null;
@@ -150,6 +161,7 @@ export async function POST(request: Request) {
         raffleTitle,
         raffleId,
         ticketCount,
+        entriesCount,
         size: selectedOption || undefined,
         shippingDetails,
         emailImageUrl,

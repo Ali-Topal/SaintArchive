@@ -14,6 +14,7 @@ type SendOrderConfirmationEmailParams = {
   raffleTitle: string;
   productName: string;
   ticketCount: number;
+  entriesCount: number;
   size?: string;
   shippingDetails: ShippingDetails;
   emailImageUrl: string;
@@ -85,22 +86,22 @@ const template = `
               <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e5e5; border-radius:12px; padding:20px;">
                 
                 <tr>
-                  <td style="font-size:18px; font-weight:700; color:#000; padding-bottom:10px;">
+                  <td style="font-size:18px; font-weight:700; color:#000; padding-bottom:10px; text-align:center;">
                     {{raffleTitle}}
-                  </td>
-                </tr>
-
-                <tr>
-                  <td style="font-size:15px; color:#000; padding-bottom:6px;">
-                    <strong>Entries:</strong> {{ticketCount}}
                   </td>
                 </tr>
 
               {{sizeSection}}
 
+                <tr>
+                  <td style="font-size:15px; color:#000; padding-bottom:6px; text-align:center;">
+                    <strong>Entries:</strong> {{entriesCount}}
+                  </td>
+                </tr>
+
                 <!-- SHIPPING DETAILS -->
                 <tr>
-                  <td style="font-size:15px; color:#000; padding-top:12px; padding-bottom:4px; font-weight:700;">
+                  <td style="font-size:15px; color:#000; padding-top:12px; padding-bottom:4px; font-weight:700; text-align:center;">
                     Shipping Details
                   </td>
                 </tr>
@@ -115,6 +116,15 @@ const template = `
                 </tr>
 
               </table>
+            </td>
+          </tr>
+
+          <!-- THANK YOU -->
+          <tr>
+            <td style="padding:25px 0 5px 0;">
+              <p style="text-align:center; font-size:14px; color:#333;">
+                Thank you for your purchase! You're officially entered into the raffle.
+              </p>
             </td>
           </tr>
 
@@ -161,6 +171,7 @@ export async function sendOrderConfirmationEmail({
   raffleTitle,
   productName,
   ticketCount,
+  entriesCount,
   size,
   shippingDetails,
   emailImageUrl,
@@ -173,21 +184,24 @@ export async function sendOrderConfirmationEmail({
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, "") ?? "https://saintarchive.com";
   const raffleLink = `${baseUrl}/raffles/${raffleId}`;
 
-  const sizeSection = size
-    ? `
+const sizeSection = size
+  ? `
               <tr>
-                <td style="font-size:15px; color:#000; padding-bottom:6px;">
+                <td style="font-size:15px; color:#000; padding-bottom:6px; text-align:center;">
                   <strong>Size:</strong> {{size}}
                 </td>
               </tr>
             `
-    : "";
+  : "";
+
+  const normalizedEntriesCount =
+    Number.isFinite(entriesCount) && entriesCount > 0 ? entriesCount : ticketCount;
 
   const html = template
     .replace(/{{emailImageUrl}}/g, emailImageUrl || "")
     .replace(/{{productName}}/g, productName || "")
     .replace(/{{raffleTitle}}/g, raffleTitle || "")
-    .replace(/{{ticketCount}}/g, String(ticketCount || ""))
+    .replace(/{{entriesCount}}/g, String(normalizedEntriesCount || ""))
     .replace(/{{sizeSection}}/g, sizeSection)
     .replace(/{{size}}/g, size || "")
     .replace(/{{shipping_name}}/g, shippingDetails.name || "")

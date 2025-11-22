@@ -8,6 +8,7 @@ export async function GET() {
     raffleId: "test123",
     productName: "Test Raffle",
     ticketCount: 1,
+    entriesCount: 1,
     size: "Test Option",
     shippingDetails: {
       name: "Test User",
