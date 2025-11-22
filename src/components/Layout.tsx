@@ -30,8 +30,8 @@ export default function Layout({ children }: LayoutProps) {
 
   return (
     <div className="bg-[#0a0a0a] text-[#f5f5f5]">
-      <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-12 px-6 py-10 sm:px-10 lg:px-14">
-        <header className="flex flex-col items-center gap-8 text-center">
+      <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-10 px-6 py-10 sm:px-10 lg:px-14">
+        <header className="flex flex-col items-center gap-5 text-center">
           <Link
             href="/"
             className="text-3xl font-semibold uppercase tracking-[0.8em] text-white"
