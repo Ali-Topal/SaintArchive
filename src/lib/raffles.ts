@@ -1,4 +1,3 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/lib/supabaseClient";
 
 export type FilterParams = {
@@ -37,9 +36,11 @@ type FilterResult = {
 const normalizeOption = (value: string | null | undefined) =>
   value?.trim() ? value.trim() : null;
 
+type ServerSupabaseClient = Awaited<ReturnType<typeof createSupabaseServerClient>>;
+
 export async function getFilteredRaffles(
   filters: FilterParams = {},
-  existingClient?: SupabaseClient<unknown, "public", unknown>
+  existingClient?: ServerSupabaseClient
 ): Promise<FilterResult> {
   const supabase =
     existingClient ?? (await createSupabaseServerClient());
