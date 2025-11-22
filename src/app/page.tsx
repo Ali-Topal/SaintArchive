@@ -223,7 +223,7 @@ export default async function HomePage({
   }
 
   return (
-    <div className="space-y-16">
+    <div className="space-y-6 lg:space-y-16">
       <Filters availableBrands={availableBrands} selectedBrands={selectedBrands} />
       <RaffleHero
         raffleId={heroRaffle.id}
