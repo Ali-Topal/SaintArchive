@@ -113,15 +113,15 @@ export async function getFilteredRaffles(
     to = from + safePageSize - 1;
 
     const retry = await buildQuery().range(from, to);
-    raffles = retry.data;
-    count = retry.count;
+    raffles = retry.data ?? [];
+    count = retry.count ?? count;
 
     if (retry.error) {
       console.error("[raffles] Failed to fetch raffles:", retry.error.message);
     }
   }
 
-  const totalCount = count ?? raffles?.length ?? 0;
+  const totalCount = count ?? raffles.length ?? 0;
   const totalPages =
     totalCount > 0 ? Math.max(1, Math.ceil(totalCount / safePageSize)) : 1;
 
