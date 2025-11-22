@@ -81,17 +81,18 @@ export default function CountdownTimer({
     return <span className={className}>Loading…</span>;
   }
 
-  if (timeParts.closed) {
-    return <span className={className}>Closed</span>;
-  }
-
-  const totalSeconds =
-    timeParts.days * 86400 + timeParts.hours * 3600 + timeParts.minutes * 60 + timeParts.seconds;
+  const isClosed = timeParts.closed;
+  const totalSeconds = isClosed
+    ? 0
+    : timeParts.days * 86400 + timeParts.hours * 3600 + timeParts.minutes * 60 + timeParts.seconds;
 
   let urgencyClass = "text-gray-300";
   let microCopy: string | null = null;
 
-  if (totalSeconds <= 10) {
+  if (isClosed) {
+    urgencyClass = "text-white/40";
+    microCopy = "Entries closed";
+  } else if (totalSeconds <= 10) {
     urgencyClass = "text-red-600 animate-pulseHard animate-shake";
     microCopy = "🚨 FINAL SECONDS — ENTER NOW!";
   } else if (totalSeconds <= 600) {
@@ -123,7 +124,11 @@ export default function CountdownTimer({
       : `countdown font-mono text-4xl sm:text-5xl lg:text-6xl font-bold ${urgencyClass}`;
 
   const microCopyClassName =
-    totalSeconds <= 600 ? "text-sm font-medium text-red-400" : "text-sm text-white/70";
+    isClosed
+      ? "text-sm uppercase tracking-[0.3em] text-white/60"
+      : totalSeconds <= 600
+        ? "text-sm font-medium text-red-400"
+        : "text-sm text-white/70";
 
   return (
     <div className={wrapperClassName}>

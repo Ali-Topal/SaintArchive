@@ -1,5 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
-
 import Link from "next/link";
 import CountdownTimer from "@/components/CountdownTimer";
 import EnterDrawTrigger from "@/components/EnterDrawTrigger";
