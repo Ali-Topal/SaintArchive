@@ -7,6 +7,7 @@ import LatestWinnerCard from "@/components/LatestWinnerCard";
 import NewsletterForm from "@/components/NewsletterForm";
 import RaffleGrid from "@/components/RaffleGrid";
 import RaffleHero from "@/components/RaffleHero";
+import RaffleImageCarousel from "@/components/RaffleImageCarousel";
 import RaffleTeaserLocked from "@/components/RaffleTeaserLocked";
 import Filters from "@/components/Filters";
 import { createSupabaseServerClient } from "@/lib/supabaseClient";
@@ -257,6 +258,12 @@ export default async function HomePage({
             const detailHref = raffle.slug
               ? `/raffles/${raffle.slug}`
               : `/raffles/${raffle.id}`;
+            const cardImages =
+              raffle.image_urls && raffle.image_urls.length > 0
+                ? raffle.image_urls
+                : raffle.image_url
+                  ? [raffle.image_url]
+                  : [];
 
             return (
               <article
@@ -267,17 +274,21 @@ export default async function HomePage({
                   href={detailHref}
                   className="flex flex-1 flex-col gap-5"
                 >
-                  <div className="rounded-xl border border-neutral-800">
-                    <img
-                      src={
-                        raffle.image_urls?.[0] ??
-                        raffle.image_url ??
-                        "/placeholder.jpg"
-                      }
-                      alt={raffle.title}
-                      className="w-full rounded-xl object-cover"
-                      style={{ aspectRatio: "1 / 1" }}
-                    />
+                  <div className="overflow-hidden rounded-xl border border-neutral-800">
+                    {cardImages.length > 0 ? (
+                      <RaffleImageCarousel
+                        images={cardImages}
+                        title={raffle.title}
+                        showControls={false}
+                      />
+                    ) : (
+                      <div
+                        className="flex aspect-square w-full items-center justify-center rounded-xl bg-black/30 text-white/70"
+                        style={{ aspectRatio: "1 / 1" }}
+                      >
+                        Image coming soon
+                      </div>
+                    )}
                   </div>
                   <div className="space-y-3">
                     <p className="text-xs uppercase text-white/60">
