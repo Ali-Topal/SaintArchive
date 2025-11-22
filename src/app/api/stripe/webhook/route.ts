@@ -104,7 +104,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ received: true }, { status: 200 });
   }
 
-  const shipping = session.shipping_details;
+  console.log("[stripe-webhook] session.shipping_details:", session.shipping_details);
+  console.log("[stripe-webhook] session.collected_information:", session.collected_information);
+
+  const shipping =
+    session.shipping_details ?? session.collected_information?.shipping_details ?? null;
   const shippingDetails = {
     name: shipping?.name || "",
     address: shipping?.address?.line1 || "",
