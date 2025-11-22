@@ -4,24 +4,27 @@ export const metadata = {
 
 const steps = [
   {
-    title: "Choose the drop",
-    description: "Browse the curated vault piece, study the details, and check the close date.",
+    title: "Choose the Drop",
+    description:
+      "Browse the latest curated items — sneakers, clothing, accessories, and limited collaborations. Each drop shows its closing time, item details, and entry price.",
   },
   {
-    title: "Enter from £0.50",
-    description: "Enterthrough our encrypted Stripe Checkout.",
+    title: "Enter Securely From £0.50",
+    description:
+      "Enter in seconds using encrypted Stripe Checkout. Your payment info never touches our servers. Choose multiple entries if you want to boost your odds.",
   },
   {
-    title: "Live draw & winner",
-    description: "We stream the draw, publish the winning number, and email the winner instantly.",
+    title: "Guaranteed Winner",
+    description:
+      "When the timer ends, a winner is drawn—no matter how many tickets were sold. The winning number is instantly published on this website and on Instagram.",
   },
 ];
 
 export default function InfoPage() {
   return (
-    <div className="space-y-14 py-16">
+    <div className="space-y-14 pt-12 pb-16">
       <section className="rounded-[32px] border border-white/10 bg-white/5/10 p-8 shadow-[0_25px_60px_-40px_rgba(0,0,0,0.7)]">
-        <div className="mb-8">
+        <div className="mb-6">
           <p className="text-xs uppercase tracking-[0.6em] text-muted">
             How it works
           </p>
@@ -51,16 +54,26 @@ export default function InfoPage() {
         <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
           <div className="space-y-4">
             <p className="text-xs uppercase tracking-[0.6em] text-muted">
-              Fair draw
+              Fair, Transparent & Secure
             </p>
             <h2 className="text-3xl font-light tracking-[0.25em] text-foreground">
-              Verifiable random winner, every time
+              Fair, Transparent & Secure
             </h2>
-            <p className="text-base text-foreground/80">
-              Each draw uses a verifiable random number generator matched
-              against the entry list. Results are timestamped, saved, and
-              published on Instagram and this site so anyone can audit the outcome.
-            </p>
+            <div className="space-y-4 text-base text-foreground/80">
+              <p>
+                Every draw uses a verifiable random number generator matched directly to the entry list.
+                Once the winner is selected, the result is timestamped, stored, and published publicly for
+                anyone to verify.
+              </p>
+              <p>
+                Payments are processed by Stripe—the same provider trusted by ASOS, Gymshark, Deliveroo and
+                Airbnb. Your card details are never stored, logged, or processed by us.
+              </p>
+              <p>
+                Winners are contacted instantly by email. Prize dispatch times, winner information, and past
+                results are always visible on the Winners page.
+              </p>
+            </div>
           </div>
           <div className="flex flex-col justify-center gap-4 rounded-[28px] border border-white/10 bg-white/5/20 p-6">
             <p className="text-xs uppercase tracking-[0.5em] text-muted">
@@ -75,6 +88,9 @@ export default function InfoPage() {
               our servers.
             </p>
           </div>
+        </div>
+        <div className="mt-6 rounded-2xl border border-green-500/30 bg-green-500/5 px-6 py-4 text-sm font-semibold text-green-400">
+          ✔ A winner is ALWAYS chosen, even if not all tickets sell.
         </div>
       </section>
     </div>
