@@ -132,23 +132,26 @@ export default async function RaffleList({ searchParams = {} }: RaffleListProps)
     .maybeSingle<RaffleRecord>();
 
   const { data: latestWinner } = await supabase
-    .from("raffles")
+    .from("raffle_winners")
     .select(
-      "id,title,color,image_url,image_urls,closes_at,winner_email,winner_instagram_handle,status"
+      "id,email,instagram_handle,size,created_at,raffle:raffles(id,title,image_url,image_urls,closes_at,status)"
     )
-    .eq("status", "closed")
-    .order("closes_at", { ascending: false })
+    .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle<{
       id: string;
-      title: string;
-      color?: string | null;
-      image_url: string | null;
-      image_urls: string[] | null;
-      closes_at: string | null;
-      winner_email: string | null;
-      winner_instagram_handle: string | null;
-      status: string;
+      email: string | null;
+      instagram_handle: string | null;
+      size: string | null;
+      created_at: string;
+      raffle: {
+        id: string;
+        title: string;
+        image_url: string | null;
+        image_urls: string[] | null;
+        closes_at: string | null;
+        status: string;
+      } | null;
     }>();
 
   let pastDrops: Array<{
@@ -160,12 +163,22 @@ export default async function RaffleList({ searchParams = {} }: RaffleListProps)
     slug?: string | null;
   }> = [];
 
-  if (latestWinner?.id) {
+  const latestWinnerRaffleId = latestWinner?.raffle?.id;
+
+  if (latestWinnerRaffleId) {
     const { data: past } = await supabase
       .from("raffles")
       .select("id,title,image_url,image_urls,closes_at,slug")
       .eq("status", "closed")
-      .neq("id", latestWinner.id)
+      .neq("id", latestWinnerRaffleId)
+      .order("closes_at", { ascending: false })
+      .limit(6);
+    pastDrops = past ?? [];
+  } else {
+    const { data: past } = await supabase
+      .from("raffles")
+      .select("id,title,image_url,image_urls,closes_at,slug")
+      .eq("status", "closed")
       .order("closes_at", { ascending: false })
       .limit(6);
     pastDrops = past ?? [];
@@ -306,13 +319,16 @@ export default async function RaffleList({ searchParams = {} }: RaffleListProps)
         </section>
       )}
 
-      {latestWinner && (
+      {latestWinner?.raffle && (
         <LatestWinnerCard
-          title={latestWinner.title}
-          imageUrl={latestWinner.image_urls?.[0] ?? latestWinner.image_url}
-          closesAt={latestWinner.closes_at ?? undefined}
-          winnerEmail={latestWinner.winner_email ?? undefined}
-          winnerInstagramHandle={latestWinner.winner_instagram_handle ?? undefined}
+          title={latestWinner.raffle.title}
+          imageUrl={
+            latestWinner.raffle.image_urls?.[0] ?? latestWinner.raffle.image_url
+          }
+          closesAt={latestWinner.raffle.closes_at ?? undefined}
+          winnerEmail={latestWinner.email ?? undefined}
+          winnerInstagramHandle={latestWinner.instagram_handle ?? undefined}
+          winnerSize={latestWinner.size ?? undefined}
         />
       )}
 

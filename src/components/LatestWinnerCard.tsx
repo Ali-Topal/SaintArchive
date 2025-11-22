@@ -5,6 +5,7 @@ type LatestWinnerCardProps = {
   closesAt?: string | null;
   winnerEmail?: string | null;
   winnerInstagramHandle?: string | null;
+  winnerSize?: string | null;
 };
 
 const maskEmail = (email: string | null | undefined) => {
@@ -35,6 +36,7 @@ export default function LatestWinnerCard({
   closesAt,
   winnerEmail,
   winnerInstagramHandle,
+  winnerSize,
 }: LatestWinnerCardProps) {
   const closedDate = closesAt
     ? `Closed ${new Date(closesAt).toLocaleDateString("en-GB", {
@@ -71,6 +73,9 @@ export default function LatestWinnerCard({
           <p className="text-base text-white/80">
             {formatWinner(winnerInstagramHandle, winnerEmail)}
           </p>
+          {winnerSize && (
+            <p className="text-sm text-white/70">Size: {winnerSize}</p>
+          )}
         </div>
       </div>
     </section>

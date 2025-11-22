@@ -1,10 +1,17 @@
 /* eslint-disable @next/next/no-img-element */
+
+type WinnerInfo = {
+  id: string;
+  email: string | null;
+  instagram_handle: string | null;
+  size: string | null;
+};
+
 type RaffleCardProps = {
   title: string;
   imageUrl?: string | null;
   closesAt?: string | null;
-  winnerEmail?: string | null;
-  winnerInstagramHandle?: string | null;
+  winners: WinnerInfo[];
 };
 
 const maskEmail = (email: string | null | undefined) => {
@@ -30,10 +37,10 @@ export default function RaffleCard({
   title,
   imageUrl,
   closesAt,
-  winnerEmail,
-  winnerInstagramHandle,
+  winners,
 }: RaffleCardProps) {
-  const hasWinner = Boolean(winnerEmail || winnerInstagramHandle);
+  const winnerList = winners ?? [];
+  const hasWinner = winnerList.length > 0;
   const closesDisplay =
     closesAt && !Number.isNaN(new Date(closesAt).valueOf())
       ? new Date(closesAt).toLocaleDateString("en-GB", {
@@ -66,10 +73,25 @@ export default function RaffleCard({
           Closed {closesDisplay}
         </p>
         <div className="mt-auto rounded-2xl border border-white/5 bg-white/5 p-4 text-sm">
-          <p className="text-muted uppercase tracking-[0.3em]">Winner</p>
-          <p className="text-base text-foreground">
-            {hasWinner ? formatWinner(winnerInstagramHandle, winnerEmail) : "TBA"}
+          <p className="text-muted uppercase tracking-[0.3em]">
+            {hasWinner && winnerList.length > 1 ? "Winners" : "Winner"}
           </p>
+          {hasWinner ? (
+            <div className="space-y-2">
+              {winnerList.map((winner) => (
+                <div key={winner.id}>
+                  <p className="text-base text-foreground">
+                    {formatWinner(winner.instagram_handle, winner.email)}
+                  </p>
+                  {winner.size && (
+                    <p className="text-xs text-muted">Size: {winner.size}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-base text-foreground">TBA</p>
+          )}
         </div>
       </div>
     </article>

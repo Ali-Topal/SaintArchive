@@ -7,9 +7,16 @@ type WinnersRaffle = {
   image_url: string | null;
   image_urls: string[] | null;
   closes_at: string | null;
-  winner_email: string | null;
-  winner_instagram_handle: string | null;
   status: string;
+  winners:
+    | Array<{
+        id: string;
+        email: string | null;
+        instagram_handle: string | null;
+        size: string | null;
+        created_at: string;
+      }>
+    | null;
 };
 
 export const revalidate = 60;
@@ -20,9 +27,8 @@ export default async function WinnersPage() {
   const { data: raffles, error } = await supabase
     .from("raffles")
     .select(
-      "id,title,image_url,image_urls,closes_at,winner_email,winner_instagram_handle,status"
+      "id,title,image_url,image_urls,closes_at,status,winners:raffle_winners(id,email,instagram_handle,size,created_at)"
     )
-    .or("winner_email.not.is.null,status.eq.closed,winner_instagram_handle.not.is.null")
     .order("closes_at", { ascending: false })
     .returns<WinnersRaffle[]>();
 
@@ -33,8 +39,7 @@ export default async function WinnersPage() {
   const nowDate = new Date();
   const items =
     raffles?.filter((raffle) => {
-      const hasWinnerInfo =
-        Boolean(raffle.winner_email) || Boolean(raffle.winner_instagram_handle);
+      const hasWinnerInfo = (raffle.winners?.length ?? 0) > 0;
       if (raffle.status === "closed") {
         return true;
       }
@@ -65,8 +70,7 @@ export default async function WinnersPage() {
               title={raffle.title}
               imageUrl={raffle.image_urls?.[0] ?? raffle.image_url}
               closesAt={raffle.closes_at}
-              winnerEmail={raffle.winner_email}
-              winnerInstagramHandle={raffle.winner_instagram_handle}
+              winners={raffle.winners ?? []}
             />
           ))}
         </div>

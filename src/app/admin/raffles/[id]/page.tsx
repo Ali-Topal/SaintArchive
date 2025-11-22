@@ -7,6 +7,30 @@ import OptionsInput from "@/components/OptionsInput";
 import Toast from "@/components/Toast";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
+type SupabaseServiceClient = ReturnType<typeof supabaseAdmin>;
+
+async function syncPrimaryWinner(client: SupabaseServiceClient, raffleId: string) {
+  const { data: primary } = await client
+    .from("raffle_winners")
+    .select("email,instagram_handle")
+    .eq("raffle_id", raffleId)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  const { error } = await client
+    .from("raffles")
+    .update({
+      winner_email: primary?.email ?? null,
+      winner_instagram_handle: primary?.instagram_handle ?? null,
+    })
+    .eq("id", raffleId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
 type PageProps = {
   params: Promise<{ id: string }>;
 };
@@ -144,32 +168,71 @@ async function updateRaffleAction(formData: FormData) {
   redirect(`/admin/raffles/${raffleId}`);
 }
 
-async function updateWinnerAction(formData: FormData) {
+async function addWinnerAction(formData: FormData) {
   "use server";
 
   const raffleId = formData.get("raffleId")?.toString();
+  const raffleSlug = formData.get("raffleSlug")?.toString();
   if (!raffleId) {
     throw new Error("Missing raffle id");
   }
 
-  const winnerEmail = formData.get("winner_email")?.toString().trim() || null;
+  const winnerEmail = formData.get("winner_email")?.toString().trim();
   const winnerInstagramHandle =
     formData.get("winner_instagram_handle")?.toString().trim() || null;
+  const selectedSize = formData.get("size")?.toString().trim() || "";
+  const customSize = formData.get("custom_size")?.toString().trim() || "";
+  const sizeValue = customSize || selectedSize || null;
+
+  if (!winnerEmail) {
+    throw new Error("Winner email is required.");
+  }
+
   const supabase = supabaseAdmin();
-  const { error } = await supabase
-    .from("raffles")
-    .update({
-      winner_email: winnerEmail,
-      winner_instagram_handle: winnerInstagramHandle,
-    })
-    .eq("id", raffleId);
+  const { error } = await supabase.from("raffle_winners").insert({
+    raffle_id: raffleId,
+    email: winnerEmail,
+    instagram_handle: winnerInstagramHandle,
+    size: sizeValue,
+  });
 
   if (error) {
     throw new Error(error.message);
   }
 
+  await syncPrimaryWinner(supabase, raffleId);
+
   revalidatePath("/admin");
   revalidatePath("/winners");
+  if (raffleSlug) {
+    revalidatePath(`/raffles/${raffleSlug}`);
+  }
+}
+
+async function removeWinnerAction(formData: FormData) {
+  "use server";
+
+  const winnerId = formData.get("winnerId")?.toString();
+  const raffleId = formData.get("raffleId")?.toString();
+  const raffleSlug = formData.get("raffleSlug")?.toString();
+
+  if (!winnerId || !raffleId) {
+    throw new Error("Missing data");
+  }
+
+  const supabase = supabaseAdmin();
+  const { error } = await supabase.from("raffle_winners").delete().eq("id", winnerId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  await syncPrimaryWinner(supabase, raffleId);
+  revalidatePath("/admin");
+  revalidatePath("/winners");
+  if (raffleSlug) {
+    revalidatePath(`/raffles/${raffleSlug}`);
+  }
 }
 
 async function setWinnerFromEntryAction(formData: FormData) {
@@ -177,6 +240,8 @@ async function setWinnerFromEntryAction(formData: FormData) {
 
   const raffleId = formData.get("raffleId")?.toString();
   const entryId = formData.get("entryId")?.toString();
+  const raffleSlug = formData.get("raffleSlug")?.toString();
+  const requestedSize = formData.get("size")?.toString().trim() || "";
 
   if (!raffleId || !entryId) {
     throw new Error("Missing data");
@@ -186,7 +251,7 @@ async function setWinnerFromEntryAction(formData: FormData) {
 
   const { data: entry, error: entryError } = await supabase
     .from("entries")
-    .select("email,instagram_handle")
+    .select("email,instagram_handle,size")
     .eq("id", entryId)
     .maybeSingle();
 
@@ -194,20 +259,27 @@ async function setWinnerFromEntryAction(formData: FormData) {
     throw new Error(entryError?.message ?? "Entry not found.");
   }
 
-  const { error } = await supabase
-    .from("raffles")
-    .update({
-      winner_email: entry.email,
-      winner_instagram_handle: entry.instagram_handle ?? null,
-    })
-    .eq("id", raffleId);
+  const finalSize = requestedSize || entry.size || null;
+
+  const { error } = await supabase.from("raffle_winners").insert({
+    raffle_id: raffleId,
+    entry_id: entryId,
+    email: entry.email,
+    instagram_handle: entry.instagram_handle ?? null,
+    size: finalSize,
+  });
 
   if (error) {
     throw new Error(error.message);
   }
 
+  await syncPrimaryWinner(supabase, raffleId);
+
   revalidatePath("/admin");
   revalidatePath("/winners");
+  if (raffleSlug) {
+    revalidatePath(`/raffles/${raffleSlug}`);
+  }
 }
 
 async function addManualEntryAction(formData: FormData) {
@@ -356,13 +428,34 @@ export default async function ManageRafflePage({ params }: PageProps) {
           ticket_count: number;
           created_at: string;
           stripe_session_id: string | null;
+          size: string | null;
         }>
       | null;
   } = await supabase
     .from("entries")
-    .select("id,email,instagram_handle,ticket_count,created_at,stripe_session_id")
+    .select("id,email,instagram_handle,ticket_count,created_at,stripe_session_id,size")
     .eq("raffle_id", id)
     .order("created_at", { ascending: false });
+
+  const {
+    data: winners,
+  }: {
+    data:
+      | Array<{
+          id: string;
+          email: string;
+          instagram_handle: string | null;
+          size: string | null;
+          created_at: string;
+        }>
+      | null;
+  } = await supabase
+    .from("raffle_winners")
+    .select("id,email,instagram_handle,size,created_at")
+    .eq("raffle_id", id)
+    .order("created_at", { ascending: false });
+
+  const sizeOptions = raffle.options ?? [];
 
   return (
     <>
@@ -565,37 +658,136 @@ export default async function ManageRafflePage({ params }: PageProps) {
         </button>
       </form>
 
-      <form
-        action={updateWinnerAction}
-        className="space-y-4 rounded-3xl border border-white/10 bg-white/5 p-8"
-      >
-        <input type="hidden" name="raffleId" value={raffle.id} />
+      <div className="space-y-4 rounded-3xl border border-white/10 bg-white/5 p-8">
         <p className="text-sm uppercase tracking-[0.4em] text-muted">
-          Winner details
+          Winners ({winners?.length ?? 0})
         </p>
-        <div className="grid gap-3 md:grid-cols-2">
-          <input
-            name="winner_email"
-            type="email"
-            defaultValue={raffle.winner_email ?? ""}
-            placeholder="email / leave blank to clear"
-            className="flex-1 rounded-2xl border border-white/15 bg-transparent px-4 py-3 text-foreground focus:border-accent focus:outline-none"
-          />
-          <input
-            name="winner_instagram_handle"
-            type="text"
-            defaultValue={raffle.winner_instagram_handle ?? ""}
-            placeholder="Winner Instagram @"
-            className="flex-1 rounded-2xl border border-white/15 bg-transparent px-4 py-3 text-foreground focus:border-accent focus:outline-none"
-          />
-        </div>
-        <button
-          type="submit"
-          className="rounded-full border border-white/20 px-6 py-3 text-xs uppercase tracking-[0.3em] text-foreground transition hover:border-white/40"
+        <form
+          action={addWinnerAction}
+          className="grid gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 md:grid-cols-2"
         >
-          Save winner
-        </button>
-      </form>
+          <input type="hidden" name="raffleId" value={raffle.id} />
+          <input type="hidden" name="raffleSlug" value={raffle.slug ?? ""} />
+          <label className="space-y-2 text-sm">
+            <span className="text-muted uppercase tracking-[0.3em]">
+              Email
+            </span>
+            <input
+              name="winner_email"
+              type="email"
+              required
+              className="w-full rounded-2xl border border-white/15 bg-transparent px-4 py-3 text-foreground focus:border-accent focus:outline-none"
+            />
+          </label>
+          <label className="space-y-2 text-sm">
+            <span className="text-muted uppercase tracking-[0.3em]">
+              Instagram
+            </span>
+            <input
+              name="winner_instagram_handle"
+              type="text"
+              placeholder="@username"
+              className="w-full rounded-2xl border border-white/15 bg-transparent px-4 py-3 text-foreground focus:border-accent focus:outline-none"
+            />
+          </label>
+          <label className="space-y-2 text-sm md:col-span-2">
+            <span className="text-muted uppercase tracking-[0.3em]">
+              Size won
+            </span>
+            <div className="grid gap-3 md:grid-cols-2">
+              {sizeOptions.length > 0 ? (
+                <>
+                  <select
+                    name="size"
+                    defaultValue=""
+                    className="w-full rounded-2xl border border-white/15 bg-transparent px-4 py-3 text-foreground focus:border-accent focus:outline-none"
+                  >
+                    <option value="">Select size (optional)</option>
+                    {sizeOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    name="custom_size"
+                    placeholder="Or type a custom size"
+                    className="w-full rounded-2xl border border-white/15 bg-transparent px-4 py-3 text-foreground focus:border-accent focus:outline-none"
+                  />
+                </>
+              ) : (
+                <input
+                  name="size"
+                  placeholder="Optional size (e.g. UK9)"
+                  className="w-full rounded-2xl border border-white/15 bg-transparent px-4 py-3 text-foreground focus:border-accent focus:outline-none"
+                />
+              )}
+            </div>
+            <p className="text-xs text-foreground/60">
+              Custom size overrides the dropdown selection.
+            </p>
+          </label>
+          <div className="md:col-span-2">
+            <button
+              type="submit"
+              className="rounded-full border border-white/20 px-6 py-3 text-xs uppercase tracking-[0.3em] text-foreground transition hover:border-white/40"
+            >
+              Add winner
+            </button>
+          </div>
+        </form>
+
+        {winners && winners.length > 0 ? (
+          <div className="space-y-3">
+            {winners.map((winner) => (
+              <div
+                key={winner.id}
+                className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-black/20 p-4 text-sm md:flex-row md:items-center md:justify-between"
+              >
+                <div>
+                  <p className="font-medium text-foreground">{winner.email}</p>
+                  <p className="text-sm text-foreground/70">
+                    {winner.instagram_handle
+                      ? winner.instagram_handle.startsWith("@")
+                        ? winner.instagram_handle
+                        : `@${winner.instagram_handle}`
+                      : "Handle: —"}
+                  </p>
+                  {winner.size && (
+                    <p className="text-xs uppercase tracking-[0.3em] text-muted">
+                      Size: {winner.size}
+                    </p>
+                  )}
+                  <p className="text-xs uppercase tracking-[0.3em] text-muted">
+                    Added{" "}
+                    {new Date(winner.created_at).toLocaleString("en-GB", {
+                      day: "numeric",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                </div>
+                <form action={removeWinnerAction} className="flex gap-2">
+                  <input type="hidden" name="winnerId" value={winner.id} />
+                  <input type="hidden" name="raffleId" value={raffle.id} />
+                  <input type="hidden" name="raffleSlug" value={raffle.slug ?? ""} />
+                  <button
+                    type="submit"
+                    className="rounded-full border border-red-400/50 px-4 py-2 text-xs uppercase tracking-[0.3em] text-red-300 transition hover:border-red-400 hover:text-red-200"
+                  >
+                    Remove
+                  </button>
+                </form>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="rounded-2xl border border-white/10 p-6 text-center text-xs uppercase tracking-[0.4em] text-muted">
+            No winners yet.
+          </p>
+        )}
+      </div>
 
       <div className="space-y-4 rounded-3xl border border-white/10 bg-white/5 p-8">
         <div>
@@ -698,6 +890,11 @@ export default async function ManageRafflePage({ params }: PageProps) {
                             : `@${entry.instagram_handle}`
                           : "Handle: —"}
                       </p>
+                  {entry.size && (
+                    <p className="text-xs uppercase tracking-[0.3em] text-muted">
+                      Selected size: {entry.size}
+                    </p>
+                  )}
                   <p className="text-xs uppercase tracking-[0.3em] text-muted">
                     {entry.ticket_count} ticket(s) •{" "}
                     {new Date(entry.created_at).toLocaleString("en-GB", {
@@ -712,9 +909,33 @@ export default async function ManageRafflePage({ params }: PageProps) {
                   <span className="text-xs text-foreground/60">
                     Session: {entry.stripe_session_id ?? "—"}
                   </span>
-                  <form action={setWinnerFromEntryAction}>
+                  <form
+                    action={setWinnerFromEntryAction}
+                    className="flex flex-wrap items-center gap-2"
+                  >
                     <input type="hidden" name="raffleId" value={raffle.id} />
                     <input type="hidden" name="entryId" value={entry.id} />
+                    <input type="hidden" name="raffleSlug" value={raffle.slug ?? ""} />
+                    {sizeOptions.length > 0 ? (
+                      <select
+                        name="size"
+                        defaultValue={entry.size ?? ""}
+                        className="rounded-full border border-white/15 bg-transparent px-3 py-2 text-xs uppercase tracking-[0.3em] text-foreground focus:border-accent focus:outline-none"
+                      >
+                        <option value="">Select size</option>
+                        {sizeOptions.map((option) => (
+                          <option key={`${entry.id}-${option}`} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        type="hidden"
+                        name="size"
+                        value={entry.size ?? ""}
+                      />
+                    )}
                     <button
                       type="submit"
                       className="rounded-full border border-accent px-4 py-2 text-xs uppercase tracking-[0.3em] text-accent transition hover:bg-accent/10"

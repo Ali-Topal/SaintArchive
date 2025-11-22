@@ -21,6 +21,15 @@ type RaffleBySlug = {
   winner_email: string | null;
   winner_instagram_handle: string | null;
   max_entries_per_user: number | null;
+  winners:
+    | Array<{
+        id: string;
+        email: string | null;
+        instagram_handle: string | null;
+        size: string | null;
+        created_at: string;
+      }>
+    | null;
 };
 
 type PageProps = {
@@ -39,7 +48,7 @@ export default async function RaffleDetailPage({ params }: PageProps) {
   const { data: raffleBySlug, error: slugError } = await supabase
     .from("raffles")
     .select(
-      "id,title,color,description,options,brand,image_url,image_urls,ticket_price_cents,closes_at,status,winner_email,winner_instagram_handle,max_entries_per_user"
+      "id,title,color,description,options,brand,image_url,image_urls,ticket_price_cents,closes_at,status,winner_email,winner_instagram_handle,max_entries_per_user,winners:raffle_winners(id,email,instagram_handle,size,created_at)"
     )
     .eq("slug", slug)
     .maybeSingle<RaffleBySlug>();
@@ -52,7 +61,7 @@ export default async function RaffleDetailPage({ params }: PageProps) {
     const { data: raffleById, error: idError } = await supabase
       .from("raffles")
       .select(
-        "id,title,color,description,options,brand,image_url,image_urls,ticket_price_cents,closes_at,status,winner_email,winner_instagram_handle,max_entries_per_user"
+        "id,title,color,description,options,brand,image_url,image_urls,ticket_price_cents,closes_at,status,winner_email,winner_instagram_handle,max_entries_per_user,winners:raffle_winners(id,email,instagram_handle,size,created_at)"
       )
       .eq("id", slug)
       .maybeSingle<RaffleBySlug>();
@@ -81,6 +90,7 @@ export default async function RaffleDetailPage({ params }: PageProps) {
     console.error("[raffle-detail] Failed to load entry totals:", entryError.message);
   }
   const entriesCount = Number(entryRows?.[0]?.total ?? 0);
+  const winnersList = raffle.winners ?? [];
 
   const displayImages =
     raffle.image_urls && raffle.image_urls.length > 0
@@ -244,16 +254,27 @@ export default async function RaffleDetailPage({ params }: PageProps) {
 
       <section className="space-y-3 rounded-md border border-[#333] px-5 py-4">
         <h3 className="text-sm uppercase tracking-[0.3em] text-white/60">
-          Winner
+          Winners
         </h3>
-        {raffle.winner_email || raffle.winner_instagram_handle ? (
-          <div className="text-white">
-            <p className="text-lg font-semibold">
-              {formatWinner(raffle.winner_instagram_handle, raffle.winner_email)}
-            </p>
-            <p className="text-sm text-white/60">
-              Closed {closesDisplay}
-            </p>
+        {winnersList.length > 0 ? (
+          <div className="space-y-3 text-white">
+            {winnersList.map((winner) => (
+              <div key={winner.id}>
+                <p className="text-lg font-semibold">
+                  {formatWinner(winner.instagram_handle, winner.email)}
+                </p>
+                <p className="text-sm text-white/60">
+                  {winner.size ? `Size: ${winner.size} • ` : ""}
+                  Added{" "}
+                  {new Date(winner.created_at).toLocaleString("en-GB", {
+                    day: "numeric",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </p>
+              </div>
+            ))}
           </div>
         ) : (
           <p className="text-sm text-white/70">
