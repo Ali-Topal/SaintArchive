@@ -66,11 +66,14 @@ export default async function RaffleDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const { count: entriesCountRaw } = await supabase
-    .from("entries")
-    .select("id", { count: "exact", head: true })
-    .eq("raffle_id", raffle.id);
-  const entriesCount = entriesCountRaw ?? 0;
+  const { data: entryRows, error: entryError } = await supabase.rpc(
+    "get_entries_totals",
+    { ids: [raffle.id] }
+  );
+  if (entryError) {
+    console.error("[raffle-detail] Failed to load entry totals:", entryError.message);
+  }
+  const entriesCount = Number(entryRows?.[0]?.total ?? 0);
 
   const displayImages =
     raffle.image_urls && raffle.image_urls.length > 0

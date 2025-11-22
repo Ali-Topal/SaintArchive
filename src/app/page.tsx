@@ -31,10 +31,6 @@ type RaffleRecord = {
   sort_priority: number | null;
 };
 
-type EntriesRow = {
-  raffle_id: string;
-};
-
 type HighlightRaffle = {
   id: string;
   title: string;
@@ -151,33 +147,21 @@ export default async function HomePage({
   const entriesCountMap = new Map<string, number>();
 
   if (activeIds.length > 0) {
-    const { data: entriesRows, error: entriesError } = await supabase
-      .from("entries")
-      .select("raffle_id")
-      .in("raffle_id", activeIds)
-      .returns<EntriesRow[]>();
+    const { data: entryRows, error: entriesError } = await supabase.rpc(
+      "get_entries_totals",
+      { ids: activeIds }
+    );
 
     if (entriesError) {
       console.error("[homepage] Failed to fetch entries counts:", entriesError.message);
     }
 
-    entriesRows?.forEach((row) => {
-      entriesCountMap.set(row.raffle_id, (entriesCountMap.get(row.raffle_id) ?? 0) + 1);
+    entryRows?.forEach(({ raffle_id, total }: { raffle_id: string; total: number }) => {
+      entriesCountMap.set(raffle_id, Number(total) || 0);
     });
   }
 
-  let heroEntries = 0;
-  if (heroRaffle) {
-    const { count = 0, error: heroEntriesError } = await supabase
-      .from("entries")
-      .select("id", { count: "exact", head: true })
-      .eq("raffle_id", heroRaffle.id);
-
-    if (heroEntriesError) {
-      console.error("[homepage] Failed to count hero entries:", heroEntriesError.message);
-    }
-    heroEntries = count ?? 0;
-  }
+  const heroEntries = heroRaffle ? entriesCountMap.get(heroRaffle.id) ?? 0 : 0;
 
   const { data: nextDrop } = await supabase
     .from("raffles")

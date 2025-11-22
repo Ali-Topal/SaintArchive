@@ -109,7 +109,7 @@ export default function EnterDrawModal({
           ticketCount: entryCount,
           email: email.trim(),
           instagramHandle: instagramHandle.trim(),
-          selectedOption,
+          selectedOption: optionList.length > 0 ? selectedOption : "",
         }),
       });
 
