@@ -120,7 +120,7 @@ export default function RaffleHero({
   );
 
   return (
-    <section className="group relative rounded-2xl border border-neutral-800 bg-[#0b0b0b] px-6 py-8 transition duration-200 hover:border-white">
+    <section className="group relative z-0 rounded-2xl border border-neutral-800 bg-[#0b0b0b] px-6 pt-16 pb-8 transition duration-200 hover:border-white">
       {detailHref && (
         <Link
           href={detailHref}

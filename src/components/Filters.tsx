@@ -108,7 +108,7 @@ export default function Filters({ groups, selected }: FiltersProps) {
   );
 
   return (
-    <div className="space-y-4">
+    <div className="relative z-20 space-y-4">
       <div className="flex flex-wrap items-center justify-end gap-3">
         <div className="relative" ref={menuRef}>
           <button
@@ -126,7 +126,7 @@ export default function Filters({ groups, selected }: FiltersProps) {
           </button>
 
           {open && (
-            <div className="absolute right-0 z-20 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-2xl border border-white/10 bg-[#050505] p-4 shadow-[0_20px_60px_rgba(0,0,0,0.65)] sm:w-80">
+            <div className="absolute right-0 z-40 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-2xl border border-white/10 bg-[#050505] p-4 shadow-[0_20px_60px_rgba(0,0,0,0.65)] sm:w-80">
               {groups.map((group) => (
                 <div key={group.key} className="space-y-3">
                   <p className="text-xs uppercase tracking-[0.5em] text-white/60">{group.label}</p>
