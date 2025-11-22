@@ -9,7 +9,7 @@ const steps = [
       "Browse the latest curated items — sneakers, clothing, accessories, and limited collaborations. Each drop shows its closing time, item details, and entry price.",
   },
   {
-    title: "Enter Securely From £0.50",
+    title: "Enter Securely From £1",
     description:
       "Enter in seconds using encrypted Stripe Checkout. Your payment info never touches our servers. Choose multiple entries if you want to boost your odds.",
   },

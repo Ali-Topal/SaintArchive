@@ -10,7 +10,7 @@ export default function TermsPage() {
         <section className="space-y-2">
           <h2 className="text-base font-semibold text-white">1. Eligibility</h2>
           <p>
-            Lucian Saint Raffles prize competitions are open to individuals aged 18 or older. We
+            Lucian Saint Raffles prize competitions are open to all individuals. We
             reserve the right to restrict participation in jurisdictions where local regulations
             prohibit or limit prize competitions. Entrants are responsible for confirming that their
             participation is lawful.
