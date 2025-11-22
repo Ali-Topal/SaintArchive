@@ -67,8 +67,9 @@ export async function getFilteredRaffles(
   );
 
   const sanitizedBrands =
-    filters.brand?.map((value) => brandLookup.get(value.toLowerCase())).filter(Boolean) ??
-    [];
+    filters.brand
+      ?.map((value) => brandLookup.get(value.toLowerCase()))
+      .filter((value): value is string => typeof value === "string") ?? [];
 
   let query = supabase
     .from("raffles")
