@@ -101,13 +101,15 @@ export default function RaffleHero({
         </div>
       </div>
 
-      <div className="order-1 overflow-hidden rounded-xl border border-neutral-800 lg:order-2">
+      <div className="order-1 lg:order-2">
         {displayImages.length > 0 ? (
-          <RaffleImageCarousel
-            images={displayImages}
-            title={title}
-            showControls={showCarouselControls}
-          />
+          <div className="aspect-square overflow-hidden rounded-xl border border-neutral-800">
+            <RaffleImageCarousel
+              images={displayImages}
+              title={title}
+              showControls={showCarouselControls}
+            />
+          </div>
         ) : (
           <div className="flex aspect-square w-full items-center justify-center rounded-xl bg-black/30 text-white/70">
             Image coming soon
