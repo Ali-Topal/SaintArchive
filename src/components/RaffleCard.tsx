@@ -52,12 +52,12 @@ export default function RaffleCard({
 
   return (
     <article className="flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-xl shadow-black/30">
-      <div className="relative h-48 w-full overflow-hidden border-b border-white/10">
+      <div className="relative w-full overflow-hidden border-b border-white/10">
         {imageUrl ? (
           <img
             src={imageUrl}
             alt={title}
-            className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
+            className="aspect-[5/5] w-full object-cover transition-transform duration-700 hover:scale-105"
           />
         ) : (
           <div className="flex h-full items-center justify-center bg-linear-to-br from-[#1b160e] to-[#050505] text-accent">
