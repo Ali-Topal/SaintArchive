@@ -120,42 +120,45 @@ export default function RaffleHero({
   );
 
   return (
-    <section className="group rounded-2xl border border-neutral-800 bg-[#0b0b0b] px-6 py-8 transition duration-200 hover:border-white">
-      {detailHref ? (
+    <section className="group relative rounded-2xl border border-neutral-800 bg-[#0b0b0b] px-6 py-8 transition duration-200 hover:border-white">
+      {detailHref && (
         <Link
           href={detailHref}
-          className="block focus:outline-none focus:ring-2 focus:ring-white/30"
+          className="absolute inset-0 z-10"
+          aria-label={`View details for ${title}`}
         >
-          {gridContent}
+          <span className="sr-only">{`View ${title}`}</span>
         </Link>
-      ) : (
-        gridContent
       )}
-      <div className="mt-6 flex flex-col gap-3">
-        {detailHref && (
-          <Link
-            href={detailHref}
-            className="inline-flex w-full items-center justify-center rounded-full border border-white/40 px-6 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white transition hover:border-white"
-          >
-            View details
-          </Link>
-        )}
 
-        {enterEnabled ? (
-          <EnterDrawTrigger
-            raffleId={raffleId}
-            title={title}
-            ticketPriceCents={ticketPriceCents}
-            maxEntriesPerUser={maxEntriesPerUser}
-            options={options}
-            buttonLabel="Enter draw"
-            buttonClassName="inline-flex w-full items-center justify-center rounded-full border border-white/30 bg-white px-6 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-black transition hover:opacity-90"
-          />
-        ) : (
-          <div className="inline-flex w-full items-center justify-center rounded-full border border-white/20 px-6 py-2 text-xs uppercase tracking-[0.2em] text-white/70">
-            Entries closed
-          </div>
-        )}
+      <div className={`relative ${detailHref ? "z-20 pointer-events-none" : ""}`}>
+        {gridContent}
+        <div className={`mt-6 flex flex-col gap-3 ${detailHref ? "pointer-events-auto" : ""}`}>
+          {detailHref && (
+            <Link
+              href={detailHref}
+              className="inline-flex w-full items-center justify-center rounded-full border border-white/40 px-6 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white transition hover:border-white"
+            >
+              View details
+            </Link>
+          )}
+
+          {enterEnabled ? (
+            <EnterDrawTrigger
+              raffleId={raffleId}
+              title={title}
+              ticketPriceCents={ticketPriceCents}
+              maxEntriesPerUser={maxEntriesPerUser}
+              options={options}
+              buttonLabel="Enter draw"
+              buttonClassName="inline-flex w-full items-center justify-center rounded-full border border-white/30 bg-white px-6 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-black transition hover:opacity-90"
+            />
+          ) : (
+            <div className="inline-flex w-full items-center justify-center rounded-full border border-white/20 px-6 py-2 text-xs uppercase tracking-[0.2em] text-white/70">
+              Entries closed
+            </div>
+          )}
+        </div>
       </div>
     </section>
   );
