@@ -29,6 +29,9 @@ type PageProps = {
 
 export const revalidate = 60;
 
+const uuidPattern =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export default async function RaffleDetailPage({ params }: PageProps) {
   const { slug } = await params;
   const supabase = await createSupabaseServerClient();
@@ -43,7 +46,9 @@ export default async function RaffleDetailPage({ params }: PageProps) {
 
   let raffle = raffleBySlug;
 
-  if (!raffle) {
+  const slugLooksLikeUuid = uuidPattern.test(slug);
+
+  if (!raffle && slugLooksLikeUuid) {
     const { data: raffleById, error: idError } = await supabase
       .from("raffles")
       .select(
@@ -57,6 +62,8 @@ export default async function RaffleDetailPage({ params }: PageProps) {
     }
 
     raffle = raffleById ?? null;
+  } else if (!raffle) {
+    console.warn("[raffle-detail] Skipping id lookup, slug is not a UUID:", slug);
   }
 
   if (!raffle) {
