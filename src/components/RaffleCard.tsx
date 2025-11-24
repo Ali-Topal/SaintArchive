@@ -1,4 +1,4 @@
-/* eslint-disable @next/next/no-img-element */
+import Image from "next/image";
 
 type WinnerInfo = {
   id: string;
@@ -54,13 +54,17 @@ export default function RaffleCard({
     <article className="flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-xl shadow-black/30">
       <div className="relative w-full overflow-hidden border-b border-white/10">
         {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={title}
-            className="aspect-[5/5] w-full object-cover transition-transform duration-700 hover:scale-105"
-          />
+          <div className="relative aspect-[5/5] w-full">
+            <Image
+              src={imageUrl}
+              alt={title}
+              fill
+              className="object-cover transition-transform duration-700 hover:scale-105"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
+          </div>
         ) : (
-          <div className="flex h-full items-center justify-center bg-linear-to-br from-[#1b160e] to-[#050505] text-accent">
+          <div className="flex aspect-[5/5] items-center justify-center bg-linear-to-br from-[#1b160e] to-[#050505] text-accent">
             Image pending
           </div>
         )}
