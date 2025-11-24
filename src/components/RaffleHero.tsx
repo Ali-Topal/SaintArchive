@@ -1,5 +1,6 @@
 import Link from "next/link";
 import CountdownTimer from "./CountdownTimer";
+import Image from "next/image";
 import RaffleImageCarousel from "./RaffleImageCarousel";
 import EnterDrawTrigger from "./EnterDrawTrigger";
 
@@ -103,12 +104,23 @@ export default function RaffleHero({
 
       <div className="order-1 lg:order-2">
         {displayImages.length > 0 ? (
-          <div className="aspect-square overflow-hidden rounded-xl border border-neutral-800">
-            <RaffleImageCarousel
-              images={displayImages}
-              title={title}
-              showControls={showCarouselControls}
-            />
+          <div className="relative z-10 aspect-square overflow-hidden rounded-xl border border-neutral-800">
+            {showCarouselControls ? (
+              <RaffleImageCarousel
+                images={displayImages}
+                title={title}
+                showControls={showCarouselControls}
+              />
+            ) : (
+              <Image
+                src={displayImages[0]}
+                alt={title}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 50vw"
+                priority
+              />
+            )}
           </div>
         ) : (
           <div className="flex aspect-square w-full items-center justify-center rounded-xl bg-black/30 text-white/70">

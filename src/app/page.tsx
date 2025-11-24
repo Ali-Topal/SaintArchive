@@ -1,6 +1,6 @@
 import RaffleList from "@/components/RaffleList";
 
-export const revalidate = 10;
+export const revalidate = 60;
 
 type HomePageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
