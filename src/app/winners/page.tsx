@@ -1,5 +1,3 @@
-import Link from "next/link";
-import Image from "next/image";
 import RaffleCard from "@/components/RaffleCard";
 import { createSupabaseServerClient } from "@/lib/supabaseClient";
 
