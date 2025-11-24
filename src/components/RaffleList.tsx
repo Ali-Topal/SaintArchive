@@ -4,7 +4,6 @@ import EnterDrawTrigger from "@/components/EnterDrawTrigger";
 import Filters from "@/components/Filters";
 import LatestWinnerCard from "@/components/LatestWinnerCard";
 import NewsletterForm from "@/components/NewsletterForm";
-import RaffleGrid from "@/components/RaffleGrid";
 import RaffleHero from "@/components/RaffleHero";
 import RaffleImageCarousel from "@/components/RaffleImageCarousel";
 import RaffleTeaserLocked from "@/components/RaffleTeaserLocked";
@@ -199,36 +198,6 @@ export default async function RaffleList({ searchParams = {} }: RaffleListProps)
   const nextDrop = nextDropResult.data ?? null;
   const latestWinner = latestWinnerResult.data ?? null;
 
-  let pastDrops: Array<{
-    id: string;
-    title: string;
-    image_url: string | null;
-    image_urls: string[] | null;
-    closes_at: string | null;
-    slug?: string | null;
-  }> = [];
-
-  const latestWinnerRaffleId = latestWinner?.raffle?.id;
-
-  if (latestWinnerRaffleId) {
-    const { data: past } = await supabase
-      .from("raffles")
-      .select("id,title,image_url,image_urls,closes_at,slug")
-      .eq("status", "closed")
-      .neq("id", latestWinnerRaffleId)
-      .order("closes_at", { ascending: false })
-      .limit(6);
-    pastDrops = past ?? [];
-  } else {
-    const { data: past } = await supabase
-      .from("raffles")
-      .select("id,title,image_url,image_urls,closes_at,slug")
-      .eq("status", "closed")
-      .order("closes_at", { ascending: false })
-      .limit(6);
-    pastDrops = past ?? [];
-  }
-
   return (
     <div className="space-y-6 lg:space-y-16">
       <Filters groups={buildFilterGroups(availableBrands)} selected={selectedFilters} />
@@ -408,20 +377,6 @@ export default async function RaffleList({ searchParams = {} }: RaffleListProps)
         />
       )}
 
-      {pastDrops.length > 0 && (
-        <section className="space-y-4 rounded-2xl border border-neutral-800 bg-[#0b0b0b] p-6">
-          <div className="flex flex-col gap-2">
-            <p className="text-xs uppercase text-white/60">Past drops</p>
-            <h2 className="text-2xl font-semibold text-white">Archive of crowned winners</h2>
-          </div>
-          <RaffleGrid
-            items={pastDrops.map((drop) => ({
-              ...drop,
-              image_url: drop.image_urls?.[0] ?? drop.image_url,
-            }))}
-          />
-        </section>
-      )}
 
       <section className="space-y-4 rounded-2xl border border-neutral-800 bg-[#0b0b0b] p-6 text-center">
         <div className="space-y-2">
