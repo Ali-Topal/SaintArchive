@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 
 type EnterDrawModalProps = {
   isOpen: boolean;
@@ -48,13 +49,16 @@ export default function EnterDrawModal({
 
   useEffect(() => {
     if (!isOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     if (optionList.length === 0) {
       setSelectedOption("");
-      return;
-    }
-    if (!optionList.includes(selectedOption)) {
+    } else if (!optionList.includes(selectedOption)) {
       setSelectedOption(optionList[0]);
     }
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
   }, [isOpen, optionList, selectedOption]);
 
   const totalPrice = useMemo(
@@ -139,9 +143,9 @@ export default function EnterDrawModal({
     return null;
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4 py-10">
-      <div className="w-full max-w-md rounded-2xl border border-white/15 bg-[#050505] p-6 text-white">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 px-4 py-10">
+      <div className="relative z-10 w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-white/15 bg-[#050505] p-6 text-white scrollbar-thin scrollbar-thumb-white/20">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-white/60">
@@ -275,7 +279,8 @@ export default function EnterDrawModal({
           {isSubmitting ? "Processing…" : "Secure Entries"}
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
