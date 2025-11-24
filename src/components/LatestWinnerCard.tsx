@@ -1,4 +1,4 @@
-/* eslint-disable @next/next/no-img-element */
+import Image from "next/image";
 type LatestWinnerCardProps = {
   title: string;
   imageUrl?: string | null;
@@ -52,12 +52,15 @@ export default function LatestWinnerCard({
       <div className="mt-4 flex flex-col gap-4 sm:flex-row">
         <div className="overflow-hidden rounded-lg border border-neutral-800 sm:w-40">
           {imageUrl ? (
-            <img
-              src={imageUrl}
-              alt={title}
-              className="w-full object-cover"
-              style={{ aspectRatio: "1 / 1" }}
-            />
+            <div className="relative aspect-square w-full">
+              <Image
+                src={imageUrl}
+                alt={title}
+                fill
+                className="object-cover"
+                sizes="(max-width: 640px) 100vw, 160px"
+              />
+            </div>
           ) : (
             <div
               className="flex items-center justify-center text-white/60"

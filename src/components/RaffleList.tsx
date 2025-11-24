@@ -1,4 +1,6 @@
 import Link from "next/link";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { Suspense } from "react";
 import CountdownTimer from "@/components/CountdownTimer";
 import EnterDrawTrigger from "@/components/EnterDrawTrigger";
 import Filters from "@/components/Filters";
@@ -163,7 +165,39 @@ export default async function RaffleList({ searchParams = {} }: RaffleListProps)
   const now = new Date();
   const heroIsOpen = heroRaffle ? isRaffleOpen(heroRaffle, now) : false;
 
-  const { data: nextDrop } = await supabase
+  const nextDropPromise = supabase
+    .from("raffles")
+    .select("id,title,color,image_url,image_urls,closes_at,status")
+    .eq("status", "upcoming")
+    .order("closes_at", { ascending: true })
+    .limit(1)
+    .maybeSingle<RaffleRecord>();
+
+  const latestWinnerPromise = supabase
+    .from("raffle_winners")
+    .select(
+      "id,email,instagram_handle,size,created_at,raffle:raffles(id,title,image_url,image_urls,closes_at,status)"
+    )
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle<{
+      id: string;
+      email: string | null;
+      instagram_handle: string | null;
+      size: string | null;
+      created_at: string;
+      raffle: {
+        id: string;
+        title: string;
+        image_url: string | null;
+        image_urls: string[] | null;
+        closes_at: string | null;
+        status: string;
+      } | null;
+    }>();
+
+  const nextDrop = await nextDropPromise;
+  const latestWinner = await latestWinnerPromise;
     .from("raffles")
     .select("id,title,color,image_url,image_urls,closes_at,status")
     .eq("status", "upcoming")
@@ -243,11 +277,11 @@ export default async function RaffleList({ searchParams = {} }: RaffleListProps)
         detailHref={heroRaffle.slug ? `/raffles/${heroRaffle.slug}` : `/raffles/${heroRaffle.id}`}
       />
 
-      {nextDrop && (
+      {nextDrop && nextDrop.data && (
         <RaffleTeaserLocked
-          title={nextDrop.title}
-          imageUrl={nextDrop.image_url}
-          closesAt={nextDrop.closes_at ?? undefined}
+          title={nextDrop.data.title}
+          imageUrl={nextDrop.data.image_url}
+          closesAt={nextDrop.data.closes_at ?? undefined}
         />
       )}
 
@@ -390,16 +424,16 @@ export default async function RaffleList({ searchParams = {} }: RaffleListProps)
         </nav>
       )}
 
-      {latestWinner?.raffle && (
+      {latestWinner?.data?.raffle && (
         <LatestWinnerCard
-          title={latestWinner.raffle.title}
+          title={latestWinner.data.raffle.title}
           imageUrl={
-            latestWinner.raffle.image_urls?.[0] ?? latestWinner.raffle.image_url
+            latestWinner.data.raffle.image_urls?.[0] ?? latestWinner.data.raffle.image_url
           }
-          closesAt={latestWinner.raffle.closes_at ?? undefined}
-          winnerEmail={latestWinner.email ?? undefined}
-          winnerInstagramHandle={latestWinner.instagram_handle ?? undefined}
-          winnerSize={latestWinner.size ?? undefined}
+          closesAt={latestWinner.data.raffle.closes_at ?? undefined}
+          winnerEmail={latestWinner.data.email ?? undefined}
+          winnerInstagramHandle={latestWinner.data.instagram_handle ?? undefined}
+          winnerSize={latestWinner.data.size ?? undefined}
         />
       )}
 
