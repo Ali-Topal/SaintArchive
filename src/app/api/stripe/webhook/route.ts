@@ -21,6 +21,12 @@ type CheckoutSessionWithShipping = Stripe.Checkout.Session & {
     name: string | null;
     address: Stripe.Address | null;
   } | null;
+  collected_information?: {
+    shipping_details?: {
+      name: string | null;
+      address: Stripe.Address | null;
+    } | null;
+  } | null;
 };
 
 export async function POST(request: Request) {
