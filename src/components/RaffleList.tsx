@@ -351,31 +351,44 @@ export default async function RaffleList({ searchParams = {} }: RaffleListProps)
       )}
 
       {totalPages > 1 && (
-        <nav className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm sm:flex-row sm:items-center sm:justify-between">
+        <nav className="flex flex-col items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-center">
           <p className="text-xs uppercase tracking-[0.3em] text-muted">
             Showing {firstItemIndex}-{lastItemIndex} of {totalCount}
           </p>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-center gap-2">
             <Link
               href={buildPageHref(currentPage - 1)}
               aria-disabled={!hasPrevPage}
-              className={`rounded-full border border-white/20 px-4 py-2 text-xs uppercase tracking-[0.3em] text-white transition hover:border-white/60 ${
+              aria-label="Previous page"
+              className={`flex h-9 w-9 items-center justify-center rounded-full border border-white/20 text-lg text-white transition hover:border-white/60 ${
                 hasPrevPage ? "" : "pointer-events-none opacity-40"
               }`}
             >
-              Previous
+              &larr;
             </Link>
-            <span className="text-xs uppercase tracking-[0.3em] text-muted">
-              Page {currentPage} of {totalPages}
-            </span>
+            {Array.from({ length: totalPages }, (_, index) => index + 1).map((pageNumber) => (
+              <Link
+                key={pageNumber}
+                href={buildPageHref(pageNumber)}
+                aria-current={pageNumber === currentPage ? "page" : undefined}
+                className={`flex h-9 min-w-[2.25rem] items-center justify-center rounded-full border px-3 text-xs uppercase tracking-[0.3em] transition ${
+                  pageNumber === currentPage
+                    ? "border-white bg-white text-black"
+                    : "border-white/20 text-white hover:border-white/60"
+                }`}
+              >
+                {pageNumber}
+              </Link>
+            ))}
             <Link
               href={buildPageHref(currentPage + 1)}
               aria-disabled={!hasNextPage}
-              className={`rounded-full border border-white/20 px-4 py-2 text-xs uppercase tracking-[0.3em] text-white transition hover:border-white/60 ${
+              aria-label="Next page"
+              className={`flex h-9 w-9 items-center justify-center rounded-full border border-white/20 text-lg text-white transition hover:border-white/60 ${
                 hasNextPage ? "" : "pointer-events-none opacity-40"
               }`}
             >
-              Next
+              &rarr;
             </Link>
           </div>
         </nav>

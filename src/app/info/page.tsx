@@ -11,7 +11,7 @@ const steps = [
   {
     title: "Enter Securely From £1",
     description:
-      "Enter in seconds using encrypted Stripe Checkout. Your payment info never touches our servers. Choose multiple entries if you want to boost your odds.",
+      "Enter in seconds using encrypted Stripe Checkout. Choose multiple entries if you want to boost your odds.",
   },
   {
     title: "Guaranteed Winner",
@@ -64,10 +64,6 @@ export default function InfoPage() {
                 Every draw uses a verifiable random number generator matched directly to the entry list.
                 Once the winner is selected, the result is timestamped, stored, and published publicly for
                 anyone to verify.
-              </p>
-              <p>
-                Payments are processed by Stripe—the same provider trusted by ASOS, Gymshark, Deliveroo and
-                Airbnb. Your card details are never stored, logged, or processed by us.
               </p>
               <p>
                 Winners are contacted instantly by email. Prize dispatch times, winner information, and past
