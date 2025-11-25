@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import BackToDropsButton from "@/components/BackToDropsButton";
 import CountdownTimer from "@/components/CountdownTimer";
 import EnterDrawTrigger from "@/components/EnterDrawTrigger";
 import RaffleImageCarousel from "@/components/RaffleImageCarousel";
@@ -137,9 +137,7 @@ export default async function RaffleDetailPage({ params }: PageProps) {
   return (
     <div className="mx-auto max-w-5xl space-y-10 px-4 py-10 text-white md:px-6">
       <ScrollToTop />
-      <Link href="/" className="text-sm text-white/60 hover:text-white">
-        ← Back to Drops
-      </Link>
+      <BackToDropsButton />
 
       <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="flex h-full items-center justify-center rounded-md bg-black/20 p-2">

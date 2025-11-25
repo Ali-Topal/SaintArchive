@@ -583,6 +583,7 @@ export default async function ManageRafflePage({ params }: PageProps) {
               className="w-full rounded-2xl border border-white/15 bg-transparent px-4 py-3 text-foreground focus:border-accent focus:outline-none"
             >
               <option value="draft">Draft</option>
+              <option value="upcoming">Upcoming</option>
               <option value="active">Active</option>
               <option value="closed">Closed</option>
             </select>

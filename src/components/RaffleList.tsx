@@ -76,7 +76,7 @@ async function fetchNextDrop(client: ServerSupabaseClient): Promise<RaffleRecord
   const { data, error } = await client
     .from("raffles")
     .select("id,title,color,image_url,image_urls,closes_at,status")
-    .eq("status", "draft")
+    .eq("status", "upcoming")
     .order("closes_at", { ascending: true })
     .limit(1)
     .maybeSingle<RaffleRecord>();

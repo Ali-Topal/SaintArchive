@@ -127,36 +127,29 @@ export default async function AdminPage() {
                 className="mt-4 flex flex-wrap gap-3"
               >
                 <input type="hidden" name="raffleId" value={raffle.id} />
-                {raffle.status !== "draft" && (
-                  <button
-                    type="submit"
-                    name="status"
-                    value="draft"
-                    className="rounded-full border border-white/20 px-4 py-2 text-xs uppercase tracking-[0.3em] text-muted transition duration-200 hover:border-white/60 hover:text-white active:scale-95"
-                  >
-                    Mark Draft
-                  </button>
-                )}
-                {raffle.status !== "active" && (
-                  <button
-                    type="submit"
-                    name="status"
-                    value="active"
-                    className="rounded-full border border-accent px-4 py-2 text-xs uppercase tracking-[0.3em] text-accent transition duration-200 hover:bg-accent/10 active:scale-95"
-                  >
-                    Set Active
-                  </button>
-                )}
-                {raffle.status !== "closed" && (
-                  <button
-                    type="submit"
-                    name="status"
-                    value="closed"
-                    className="rounded-full border border-white/20 px-4 py-2 text-xs uppercase tracking-[0.3em] text-muted transition duration-200 hover:border-white/60 hover:text-white active:scale-95"
-                  >
-                    Close Raffle
-                  </button>
-                )}
+                {["draft", "upcoming", "active", "closed"].map((statusOption) => {
+                  const isCurrent = raffle.status === statusOption;
+                  const baseClasses =
+                    "rounded-full border px-4 py-2 text-xs uppercase tracking-[0.3em] transition duration-200 active:scale-95";
+                  const stateClass = isCurrent
+                    ? "border-white text-white"
+                    : statusOption === "active"
+                      ? "border-accent text-accent hover:bg-accent/10"
+                      : "border-white/20 text-muted hover:border-white/60 hover:text-white";
+
+                  return (
+                    <button
+                      key={statusOption}
+                      type="submit"
+                      name="status"
+                      value={statusOption}
+                      disabled={isCurrent}
+                      className={`${baseClasses} ${stateClass}`}
+                    >
+                      {statusOption.toUpperCase()}
+                    </button>
+                  );
+                })}
               </form>
             </div>
           );
