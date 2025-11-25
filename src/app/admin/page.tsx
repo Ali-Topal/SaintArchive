@@ -133,9 +133,7 @@ export default async function AdminPage() {
                     "rounded-full border px-4 py-2 text-xs uppercase tracking-[0.3em] transition duration-200 active:scale-95";
                   const stateClass = isCurrent
                     ? "border-white text-white"
-                    : statusOption === "active"
-                      ? "border-accent text-accent hover:bg-accent/10"
-                      : "border-white/20 text-muted hover:border-white/60 hover:text-white";
+                    : "border-white/20 text-muted hover:border-white/60 hover:text-white";
 
                   return (
                     <button
