@@ -1,11 +1,12 @@
+import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
 import CountdownTimer from "@/components/CountdownTimer";
 import EnterDrawTrigger from "@/components/EnterDrawTrigger";
 import Filters from "@/components/Filters";
 import LatestWinnerCard from "@/components/LatestWinnerCard";
 import NewsletterForm from "@/components/NewsletterForm";
 import RaffleHero from "@/components/RaffleHero";
-import RaffleImageCarousel from "@/components/RaffleImageCarousel";
 import RaffleTeaserLocked from "@/components/RaffleTeaserLocked";
 import { getFilteredRaffles, type FilterParams, type RaffleRecord } from "@/lib/raffles";
 import { createSupabaseServerClient } from "@/lib/supabaseClient";
@@ -68,6 +69,57 @@ const isRaffleOpen = (raffle: RaffleRecord, reference: Date) => {
   }
   return closeDate > reference;
 };
+
+type ServerSupabaseClient = Awaited<ReturnType<typeof createSupabaseServerClient>>;
+
+async function fetchNextDrop(client: ServerSupabaseClient): Promise<RaffleRecord | null> {
+  const { data, error } = await client
+    .from("raffles")
+    .select("id,title,color,image_url,image_urls,closes_at,status")
+    .eq("status", "draft")
+    .order("closes_at", { ascending: true })
+    .limit(1)
+    .maybeSingle<RaffleRecord>();
+
+  if (error) {
+    console.error("[homepage] Failed to load next drop:", error.message);
+  }
+
+  return data ?? null;
+}
+
+type LatestWinnerRecord = {
+  id: string;
+  email: string | null;
+  instagram_handle: string | null;
+  size: string | null;
+  created_at: string;
+  raffle: {
+    id: string;
+    title: string;
+    image_url: string | null;
+    image_urls: string[] | null;
+    closes_at: string | null;
+    status: string;
+  } | null;
+};
+
+async function fetchLatestWinner(client: ServerSupabaseClient): Promise<LatestWinnerRecord | null> {
+  const { data, error } = await client
+    .from("raffle_winners")
+    .select(
+      "id,email,instagram_handle,size,created_at,raffle:raffles(id,title,image_url,image_urls,closes_at,status)"
+    )
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle<LatestWinnerRecord>();
+
+  if (error) {
+    console.error("[homepage] Failed to load latest winner:", error.message);
+  }
+
+  return data ?? null;
+}
 
 type RaffleListProps = {
   searchParams?: SearchParamRecord;
@@ -162,41 +214,8 @@ export default async function RaffleList({ searchParams = {} }: RaffleListProps)
   const now = new Date();
   const heroIsOpen = heroRaffle ? isRaffleOpen(heroRaffle, now) : false;
 
-  const nextDropPromise = supabase
-    .from("raffles")
-    .select("id,title,color,image_url,image_urls,closes_at,status")
-    .eq("status", "upcoming")
-    .order("closes_at", { ascending: true })
-    .limit(1)
-    .maybeSingle<RaffleRecord>();
-
-  const latestWinnerPromise = supabase
-    .from("raffle_winners")
-    .select(
-      "id,email,instagram_handle,size,created_at,raffle:raffles(id,title,image_url,image_urls,closes_at,status)"
-    )
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle<{
-      id: string;
-      email: string | null;
-      instagram_handle: string | null;
-      size: string | null;
-      created_at: string;
-      raffle: {
-        id: string;
-        title: string;
-        image_url: string | null;
-        image_urls: string[] | null;
-        closes_at: string | null;
-        status: string;
-      } | null;
-    }>();
-
-  const nextDropResult = await nextDropPromise;
-  const latestWinnerResult = await latestWinnerPromise;
-  const nextDrop = nextDropResult.data ?? null;
-  const latestWinner = latestWinnerResult.data ?? null;
+  const nextDropPromise = fetchNextDrop(supabase);
+  const latestWinnerPromise = fetchLatestWinner(supabase);
 
   return (
     <div className="space-y-6 lg:space-y-16">
@@ -217,25 +236,15 @@ export default async function RaffleList({ searchParams = {} }: RaffleListProps)
         detailHref={heroRaffle.slug ? `/raffles/${heroRaffle.slug}` : `/raffles/${heroRaffle.id}`}
       />
 
-      {nextDrop && (
-        <RaffleTeaserLocked
-          title={nextDrop.title}
-          imageUrl={nextDrop.image_url}
-          closesAt={nextDrop.closes_at ?? undefined}
-        />
-      )}
+      <Suspense fallback={<NextDropSkeleton />}>
+        <NextDropTeaser promise={nextDropPromise} />
+      </Suspense>
 
       {additionalActive.length > 0 && (
         <section className="grid gap-6 md:grid-cols-2">
           {additionalActive.map((raffle) => {
             const detailHref = raffle.slug ? `/raffles/${raffle.slug}` : `/raffles/${raffle.id}`;
-            const cardImages =
-              raffle.image_urls && raffle.image_urls.length > 0
-                ? raffle.image_urls
-                : raffle.image_url
-                  ? [raffle.image_url]
-                  : [];
-
+            const coverImage = raffle.image_urls?.[0] ?? raffle.image_url ?? null;
             const raffleIsOpen = isRaffleOpen(raffle, now);
 
             return (
@@ -244,18 +253,26 @@ export default async function RaffleList({ searchParams = {} }: RaffleListProps)
                 className="flex h-full flex-col rounded-2xl border border-neutral-800 bg-[#050505] p-6 transition hover:border-white"
               >
                 <Link href={detailHref} className="flex flex-1 flex-col gap-5">
-                  <div className="overflow-hidden rounded-xl border border-neutral-800">
-                    {cardImages.length > 0 ? (
-                      <RaffleImageCarousel images={cardImages} title={raffle.title} showControls={false} />
-                    ) : (
-                      <div
-                        className="flex aspect-square w-full items-center justify-center rounded-xl bg-black/30 text-white/70"
-                        style={{ aspectRatio: "1 / 1" }}
-                      >
-                        Image coming soon
+                  {coverImage ? (
+                    <div className="relative overflow-hidden rounded-xl border border-neutral-800">
+                      <div className="relative aspect-square w-full">
+                        <Image
+                          src={coverImage}
+                          alt={raffle.title}
+                          fill
+                          sizes="(max-width: 768px) 100vw, 50vw"
+                          className="object-cover"
+                          loading="lazy"
+                        />
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  ) : (
+                    <div
+                      className="flex aspect-square w-full items-center justify-center rounded-xl border border-neutral-800 bg-black/30 text-white/70"
+                    >
+                      Image coming soon
+                    </div>
+                  )}
                   <div className="space-y-3">
                     <p className="text-xs uppercase text-white/60">
                       Closes{" "}
@@ -364,20 +381,9 @@ export default async function RaffleList({ searchParams = {} }: RaffleListProps)
         </nav>
       )}
 
-      {latestWinner?.raffle && (
-        <LatestWinnerCard
-          title={latestWinner.raffle.title}
-          imageUrl={
-            latestWinner.raffle.image_urls?.[0] ?? latestWinner.raffle.image_url
-          }
-          closesAt={latestWinner.raffle.closes_at ?? undefined}
-          winnerEmail={latestWinner.email ?? undefined}
-          winnerInstagramHandle={latestWinner.instagram_handle ?? undefined}
-          winnerSize={latestWinner.size ?? undefined}
-        />
-      )}
-
-
+      <Suspense fallback={<LatestWinnerCardSkeleton />}>
+        <LatestWinnerSection promise={latestWinnerPromise} />
+      </Suspense>
       <section className="space-y-4 rounded-2xl border border-neutral-800 bg-[#0b0b0b] p-6 text-center">
         <div className="space-y-2">
           <p className="text-xs uppercase text-white/60">Stay in the circle</p>
@@ -388,6 +394,75 @@ export default async function RaffleList({ searchParams = {} }: RaffleListProps)
         </div>
       </section>
     </div>
+  );
+}
+
+
+type NextDropTeaserProps = {
+  promise: ReturnType<typeof fetchNextDrop>;
+};
+
+async function NextDropTeaser({ promise }: NextDropTeaserProps) {
+  const nextDrop = await promise;
+  if (!nextDrop) {
+    return null;
+  }
+
+  return (
+    <RaffleTeaserLocked
+      title={nextDrop.title}
+      imageUrl={nextDrop.image_url}
+      closesAt={nextDrop.closes_at ?? undefined}
+    />
+  );
+}
+
+function NextDropSkeleton() {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-[#0b0b0b] p-6 shadow-inner animate-pulse">
+      <div className="h-4 w-32 rounded bg-white/10" />
+      <div className="mt-4 h-5 w-48 rounded bg-white/10" />
+      <div className="mt-3 h-40 rounded-2xl border border-white/5 bg-white/5" />
+    </div>
+  );
+}
+
+type LatestWinnerSectionProps = {
+  promise: ReturnType<typeof fetchLatestWinner>;
+};
+
+async function LatestWinnerSection({ promise }: LatestWinnerSectionProps) {
+  const latestWinner = await promise;
+  if (!latestWinner?.raffle) {
+    return null;
+  }
+
+  return (
+    <LatestWinnerCard
+      title={latestWinner.raffle.title}
+      imageUrl={latestWinner.raffle.image_urls?.[0] ?? latestWinner.raffle.image_url}
+      closesAt={latestWinner.raffle.closes_at ?? undefined}
+      winnerEmail={latestWinner.email ?? undefined}
+      winnerInstagramHandle={latestWinner.instagram_handle ?? undefined}
+      winnerSize={latestWinner.size ?? undefined}
+    />
+  );
+}
+
+function LatestWinnerCardSkeleton() {
+  return (
+    <section className="rounded-2xl border border-neutral-800 bg-[#0b0b0b] p-6 animate-pulse">
+      <div className="h-4 w-24 rounded bg-neutral-800" />
+      <div className="mt-4 flex flex-col gap-4 sm:flex-row">
+        <div className="h-40 w-40 rounded-lg border border-neutral-800 bg-neutral-900" />
+        <div className="flex flex-1 flex-col justify-center space-y-3">
+          <div className="h-6 w-3/4 rounded bg-neutral-800" />
+          <div className="h-4 w-1/2 rounded bg-neutral-800" />
+          <div className="h-4 w-2/3 rounded bg-neutral-800" />
+          <div className="h-4 w-1/4 rounded bg-neutral-800" />
+        </div>
+      </div>
+    </section>
   );
 }
 
