@@ -16,6 +16,7 @@ export type RaffleRecord = {
   image_urls: string[] | null;
   ticket_price_cents: number;
   closes_at: string | null;
+  opens_at: string | null;
   status: string;
   max_tickets: number | null;
   max_entries_per_user: number | null;
@@ -25,7 +26,7 @@ export type RaffleRecord = {
 };
 
 const raffleSelect =
-  "id,title,color,description,options,image_url,image_urls,ticket_price_cents,closes_at,status,max_tickets,max_entries_per_user,brand,slug,sort_priority";
+  "id,title,color,description,options,image_url,image_urls,ticket_price_cents,closes_at,opens_at,status,max_tickets,max_entries_per_user,brand,slug,sort_priority";
 
 type FilterResult = {
   raffles: RaffleRecord[];

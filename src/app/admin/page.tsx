@@ -58,7 +58,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps = {}) {
   const supabase = supabaseAdmin();
   let query = supabase
     .from("raffles")
-    .select("id,title,status,closes_at,slug,sort_priority,image_url,image_urls")
+    .select("id,title,status,opens_at,closes_at,slug,sort_priority,image_url,image_urls")
     .order("sort_priority", { ascending: true, nullsFirst: true })
     .order("closes_at", { ascending: true, nullsFirst: true });
 
@@ -149,6 +149,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps = {}) {
                   </div>
                 </div>
                 <div className="flex flex-col gap-2 text-sm text-foreground/80 sm:items-end">
+                  {raffle.opens_at && (
+                    <p>Opens {formatDate(raffle.opens_at)}</p>
+                  )}
                   <p>Closes {formatDate(raffle.closes_at)}</p>
                   {raffle.slug && (
                     <Link

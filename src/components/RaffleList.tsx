@@ -75,9 +75,10 @@ type ServerSupabaseClient = Awaited<ReturnType<typeof createSupabaseServerClient
 async function fetchNextDrop(client: ServerSupabaseClient): Promise<RaffleRecord | null> {
   const { data, error } = await client
     .from("raffles")
-    .select("id,title,color,image_url,image_urls,closes_at,status")
+    .select("id,title,color,image_url,image_urls,closes_at,opens_at,status")
     .eq("status", "upcoming")
-    .order("closes_at", { ascending: true })
+    .order("opens_at", { ascending: true, nullsFirst: false })
+    .order("closes_at", { ascending: true, nullsFirst: false })
     .limit(1)
     .maybeSingle<RaffleRecord>();
 
@@ -425,6 +426,7 @@ async function NextDropTeaser({ promise }: NextDropTeaserProps) {
     <RaffleTeaserLocked
       title={nextDrop.title}
       imageUrl={nextDrop.image_url}
+      opensAt={nextDrop.opens_at ?? undefined}
       closesAt={nextDrop.closes_at ?? undefined}
     />
   );

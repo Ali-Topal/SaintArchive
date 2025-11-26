@@ -17,6 +17,7 @@ type RaffleBySlug = {
   image_urls: string[] | null;
   ticket_price_cents: number;
   closes_at: string | null;
+  opens_at: string | null;
   status: string;
   winner_email: string | null;
   winner_instagram_handle: string | null;
@@ -48,7 +49,7 @@ export default async function RaffleDetailPage({ params }: PageProps) {
   const { data: raffleBySlug, error: slugError } = await supabase
     .from("raffles")
     .select(
-      "id,title,color,description,options,brand,image_url,image_urls,ticket_price_cents,closes_at,status,winner_email,winner_instagram_handle,max_entries_per_user,winners:raffle_winners(id,email,instagram_handle,size,created_at)"
+      "id,title,color,description,options,brand,image_url,image_urls,ticket_price_cents,closes_at,opens_at,status,winner_email,winner_instagram_handle,max_entries_per_user,winners:raffle_winners(id,email,instagram_handle,size,created_at)"
     )
     .eq("slug", slug)
     .maybeSingle<RaffleBySlug>();
@@ -61,7 +62,7 @@ export default async function RaffleDetailPage({ params }: PageProps) {
     const { data: raffleById, error: idError } = await supabase
       .from("raffles")
       .select(
-        "id,title,color,description,options,brand,image_url,image_urls,ticket_price_cents,closes_at,status,winner_email,winner_instagram_handle,max_entries_per_user,winners:raffle_winners(id,email,instagram_handle,size,created_at)"
+        "id,title,color,description,options,brand,image_url,image_urls,ticket_price_cents,closes_at,opens_at,status,winner_email,winner_instagram_handle,max_entries_per_user,winners:raffle_winners(id,email,instagram_handle,size,created_at)"
       )
       .eq("id", slug)
       .maybeSingle<RaffleBySlug>();
@@ -109,11 +110,10 @@ export default async function RaffleDetailPage({ params }: PageProps) {
     currency: "GBP",
   });
   const now = new Date();
+  const opensAt = raffle.opens_at ?? undefined;
+  const opensDate = opensAt ? new Date(opensAt) : null;
   const closesAt = raffle.closes_at ?? undefined;
   const closesDate = closesAt ? new Date(closesAt) : null;
-  const isClosed =
-    raffle.status === "closed" ||
-    (closesDate && !Number.isNaN(closesDate.valueOf()) && closesDate <= now);
   const closesDisplay = closesAt
     ? new Date(closesAt).toLocaleString("en-GB", {
         weekday: "short",
@@ -123,6 +123,21 @@ export default async function RaffleDetailPage({ params }: PageProps) {
         minute: "2-digit",
       })
     : "TBA";
+  const opensDisplay =
+    opensAt && opensDate && !Number.isNaN(opensDate.valueOf())
+      ? opensDate.toLocaleString("en-GB", {
+          weekday: "short",
+          day: "numeric",
+          month: "short",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : null;
+  const isUpcoming = raffle.status === "upcoming";
+  const isClosed =
+    raffle.status === "closed" ||
+    (closesDate && !Number.isNaN(closesDate.valueOf()) && closesDate <= now);
+  const entriesOpen = raffle.status === "active" && !isClosed;
   const descriptionBlocks = raffle.description
     .split("\n")
     .map((line) => line.trim())
@@ -187,6 +202,8 @@ export default async function RaffleDetailPage({ params }: PageProps) {
             <p className="text-xs uppercase text-white/60">Countdown</p>
             {isClosed ? (
               <p className="text-lg text-white">Closed</p>
+            ) : isUpcoming && opensDisplay ? (
+              <p className="text-lg text-white">Opens {opensDisplay}</p>
             ) : closesAt ? (
               <CountdownTimer
                 targetDate={closesAt}
@@ -197,7 +214,10 @@ export default async function RaffleDetailPage({ params }: PageProps) {
             )}
           </div>
 
-          <p className="text-xs text-white/60">Closes {closesDisplay}</p>
+          <p className="text-xs text-white/60">
+            {opensDisplay && <span className="block">Opens {opensDisplay}</span>}
+            <span>Closes {closesDisplay}</span>
+          </p>
 
           {optionList.length > 0 && (
             <section className="space-y-2 rounded-md border border-[#333] px-5 py-4">
@@ -222,15 +242,7 @@ export default async function RaffleDetailPage({ params }: PageProps) {
       <section className="rounded-md border border-[#333] px-5 py-5">
         <p className="text-xs uppercase text-white/60">Enter the draw</p>
         <div className="mt-3">
-          {isClosed ? (
-            <button
-              type="button"
-              disabled
-              className="inline-flex w-full items-center justify-center rounded-full border border-white/30 px-6 py-3 text-sm font-semibold uppercase tracking-[0.3em] text-white/60"
-            >
-              Entries closed
-            </button>
-          ) : (
+          {entriesOpen ? (
             <EnterDrawTrigger
               raffleId={raffle.id}
               title={raffle.title}
@@ -240,6 +252,14 @@ export default async function RaffleDetailPage({ params }: PageProps) {
               buttonLabel="Enter draw"
               buttonClassName="inline-flex w-full items-center justify-center rounded-full border border-white/30 bg-white px-6 py-3 text-sm font-semibold uppercase tracking-[0.3em] text-black transition hover:opacity-90"
             />
+          ) : (
+            <div className="inline-flex w-full items-center justify-center rounded-full border border-white/30 px-6 py-3 text-sm font-semibold uppercase tracking-[0.3em] text-white/60">
+              {isUpcoming
+                ? opensDisplay
+                  ? `Opens ${opensDisplay}`
+                  : "Entries opening soon"
+                : "Entries closed"}
+            </div>
           )}
         </div>
       </section>

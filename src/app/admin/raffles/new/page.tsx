@@ -18,6 +18,8 @@ async function createRaffle(formData: FormData) {
     .filter((value): value is string => value.length > 0);
   const primaryImage = imageUrls[0] ?? null;
   const ticketPrice = Number(formData.get("ticket_price_cents"));
+  const opensAtRaw = formData.get("opens_at")?.toString() || "";
+  const opensAt = opensAtRaw ? new Date(opensAtRaw) : null;
   const closesAtRaw = formData.get("closes_at")?.toString() || "";
   const closesAt = closesAtRaw ? new Date(closesAtRaw) : null;
   const maxTicketsRaw = formData.get("max_tickets")?.toString().trim();
@@ -27,6 +29,9 @@ async function createRaffle(formData: FormData) {
   const sortPriority =
     sortPriorityRaw && sortPriorityRaw.length > 0 ? Number(sortPriorityRaw) : null;
   const maxEntriesPerUser = Number(formData.get("max_entries_per_user"));
+  const rawStatus = formData.get("status")?.toString() ?? "draft";
+  const allowedStatuses = new Set(["draft", "upcoming", "active", "closed"]);
+  const status = allowedStatuses.has(rawStatus) ? rawStatus : "draft";
   const options =
     formData
       .getAll("options")
@@ -91,12 +96,14 @@ async function createRaffle(formData: FormData) {
     image_urls: imageUrls,
     ticket_price_cents: ticketPrice,
     max_entries_per_user: maxEntriesPerUser,
+    opens_at:
+      opensAt && !Number.isNaN(opensAt.valueOf()) ? opensAt.toISOString() : null,
     closes_at: closesAt && !Number.isNaN(closesAt.valueOf())
       ? closesAt.toISOString()
       : null,
     max_tickets: maxTickets,
     sort_priority: sortPriority,
-    status: "draft",
+    status,
   });
 
   if (error) {
@@ -179,6 +186,22 @@ export default async function NewRafflePage() {
 
         <label className="space-y-2 text-sm block">
           <span className="text-muted uppercase tracking-[0.3em]">
+            Initial Status
+          </span>
+          <select
+            name="status"
+            defaultValue="draft"
+            className="w-full rounded-2xl border border-white/15 bg-transparent px-4 py-3 text-foreground focus:border-accent focus:outline-none"
+          >
+            <option value="draft">Draft (hidden)</option>
+            <option value="upcoming">Upcoming</option>
+            <option value="active">Active</option>
+            <option value="closed">Closed</option>
+          </select>
+        </label>
+
+        <label className="space-y-2 text-sm block">
+          <span className="text-muted uppercase tracking-[0.3em]">
             Description
           </span>
           <textarea
@@ -222,6 +245,17 @@ export default async function NewRafflePage() {
               name="max_entries_per_user"
               defaultValue={20}
               required
+              className="w-full rounded-2xl border border-white/15 bg-transparent px-4 py-3 text-foreground focus:border-accent focus:outline-none"
+            />
+          </label>
+
+          <label className="space-y-2 text-sm">
+            <span className="text-muted uppercase tracking-[0.3em]">
+              Opens At
+            </span>
+            <input
+              type="datetime-local"
+              name="opens_at"
               className="w-full rounded-2xl border border-white/15 bg-transparent px-4 py-3 text-foreground focus:border-accent focus:outline-none"
             />
           </label>

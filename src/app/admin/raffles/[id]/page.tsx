@@ -76,6 +76,12 @@ async function updateRaffleAction(formData: FormData) {
       formData.get("max_tickets")?.toString().trim() === ""
         ? null
         : Number(formData.get("max_tickets")),
+    opens_at: (() => {
+      const raw = formData.get("opens_at")?.toString();
+      if (!raw) return null;
+      const date = new Date(raw);
+      return Number.isNaN(date.valueOf()) ? null : date.toISOString();
+    })(),
     closes_at: (() => {
       const raw = formData.get("closes_at")?.toString();
       if (!raw) return null;
@@ -624,6 +630,17 @@ export default async function ManageRafflePage({ params }: PageProps) {
               min={1}
               name="max_tickets"
               defaultValue={raffle.max_tickets ?? ""}
+              className="w-full rounded-2xl border border-white/15 bg-transparent px-4 py-3 text-foreground focus:border-accent focus:outline-none"
+            />
+          </label>
+          <label className="space-y-2 text-sm">
+            <span className="text-muted uppercase tracking-[0.3em]">
+              Opens at
+            </span>
+            <input
+              type="datetime-local"
+              name="opens_at"
+              defaultValue={formatDateTime(raffle.opens_at)}
               className="w-full rounded-2xl border border-white/15 bg-transparent px-4 py-3 text-foreground focus:border-accent focus:outline-none"
             />
           </label>

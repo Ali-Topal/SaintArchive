@@ -2,21 +2,36 @@
 type RaffleTeaserLockedProps = {
   title?: string | null;
   imageUrl?: string | null;
+  opensAt?: string | null;
   closesAt?: string | null;
 };
 
 export default function RaffleTeaserLocked({
   title,
   imageUrl,
+  opensAt,
   closesAt,
 }: RaffleTeaserLockedProps) {
-  const revealText = closesAt
-    ? `Opens soon • ${new Date(closesAt).toLocaleDateString("en-GB", {
-        weekday: "short",
-        day: "numeric",
-        month: "short",
-      })}`
-    : "Reveals soon";
+  const formatDate = (value?: string | null) => {
+    if (!value) return null;
+    const date = new Date(value);
+    if (Number.isNaN(date.valueOf())) return null;
+    return date.toLocaleString("en-GB", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const openText = formatDate(opensAt);
+  const closeText = formatDate(closesAt);
+  const revealText = openText
+    ? `Opens ${openText}`
+    : closeText
+      ? `Opens soon • closes ${closeText}`
+      : "Reveals soon";
 
   return (
     <section className="rounded-2xl border border-neutral-800 bg-[#0b0b0b] p-6">
