@@ -410,7 +410,7 @@ export default async function ManageRafflePage({ params }: PageProps) {
   const { data: raffle, error } = await supabase
     .from("raffles")
     .select(
-      "id,title,slug,brand,color,options,description,image_url,image_urls,ticket_price_cents,max_entries_per_user,max_tickets,closes_at,status,winner_email,winner_instagram_handle,sort_priority"
+      "id,title,slug,brand,color,options,description,image_url,image_urls,ticket_price_cents,max_entries_per_user,max_tickets,opens_at,closes_at,status,winner_email,winner_instagram_handle,sort_priority"
     )
     .eq("id", id)
     .maybeSingle();
