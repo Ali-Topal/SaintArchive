@@ -40,13 +40,33 @@ async function updateRaffleStatus(formData: FormData) {
   revalidatePath("/admin");
 }
 
-export default async function AdminPage() {
+type AdminPageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function AdminPage({ searchParams }: AdminPageProps = {}) {
+  const resolvedSearchParams =
+    searchParams !== undefined
+      ? await searchParams
+      : ({} as Record<string, string | string[] | undefined>);
+
+  const statusFilterRaw = resolvedSearchParams.status;
+  const statusFilter = Array.isArray(statusFilterRaw)
+    ? statusFilterRaw[0]
+    : statusFilterRaw ?? "all";
+
   const supabase = supabaseAdmin();
-  const { data: raffles, error } = await supabase
+  let query = supabase
     .from("raffles")
     .select("id,title,status,closes_at,slug,sort_priority,image_url,image_urls")
     .order("sort_priority", { ascending: true, nullsFirst: true })
     .order("closes_at", { ascending: true, nullsFirst: true });
+
+  if (statusFilter !== "all") {
+    query = query.eq("status", statusFilter);
+  }
+
+  const { data: raffles, error } = await query;
 
   if (error) {
     console.error("[admin] Failed to load raffles:", error.message);
@@ -63,12 +83,37 @@ export default async function AdminPage() {
             Raffle Control
           </h1>
         </div>
-        <Link
-          href="/admin/raffles/new"
-          className="inline-flex items-center justify-center rounded-full border border-accent px-6 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-accent transition hover:bg-accent/10"
-        >
-          New Raffle
-        </Link>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+          <div className="flex flex-wrap gap-2">
+            {["all", "draft", "upcoming", "active", "closed"].map((option) => {
+              const isActive = statusFilter === option;
+              const href =
+                option === "all"
+                  ? "/admin"
+                  : `/admin?status=${encodeURIComponent(option)}`;
+              return (
+                <Link
+                  key={option}
+                  href={href}
+                  scroll={false}
+              className={`rounded-full border px-4 py-2 text-xs uppercase tracking-[0.3em] transition duration-200 ${
+                    isActive
+                  ? "border-white text-white"
+                  : "border-white/20 text-muted hover:border-white/60 hover:text-white active:scale-95"
+                  }`}
+                >
+                  {option.toUpperCase()}
+                </Link>
+              );
+            })}
+          </div>
+          <Link
+            href="/admin/raffles/new"
+            className="inline-flex items-center justify-center rounded-full border border-accent px-6 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-accent transition hover:bg-accent/10"
+          >
+            New Raffle
+          </Link>
+        </div>
       </div>
 
       <div className="space-y-4">
