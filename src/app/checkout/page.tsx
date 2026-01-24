@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabaseClient";
 import CheckoutForm from "@/components/CheckoutForm";
+import CartCheckoutForm from "@/components/CartCheckoutForm";
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -20,6 +21,24 @@ type ProductData = {
 
 export default async function CheckoutPage({ searchParams }: PageProps) {
   const params = await searchParams;
+  
+  // Check if coming from cart
+  const fromCart = params?.from === "cart";
+  
+  if (fromCart) {
+    // Cart checkout - render client component that reads from cart context
+    return (
+      <section className="mx-auto max-w-5xl px-4 py-10">
+        <div className="mb-8">
+          <p className="text-xs uppercase tracking-[0.3em] text-white/50">Checkout</p>
+          <h1 className="text-3xl font-semibold text-white">Complete your order</h1>
+        </div>
+        <CartCheckoutForm />
+      </section>
+    );
+  }
+  
+  // Single product checkout (legacy support)
   const productIdParam = params?.product;
   const productId = typeof productIdParam === "string" ? productIdParam : undefined;
   const sizeParam = params?.size;
@@ -28,7 +47,7 @@ export default async function CheckoutPage({ searchParams }: PageProps) {
   const preselectedQty = typeof qtyParam === "string" ? parseInt(qtyParam, 10) : 1;
 
   if (!productId) {
-    redirect("/");
+    redirect("/cart");
   }
 
   const supabase = await createSupabaseServerClient();

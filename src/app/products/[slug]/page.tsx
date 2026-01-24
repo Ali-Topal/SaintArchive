@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import BackToDropsButton from "@/components/BackToDropsButton";
 import ScrollToTop from "@/components/ScrollToTop";
+import ProductActions from "@/components/ProductActions";
 import { createSupabaseServerClient } from "@/lib/supabaseClient";
 
 type ProductBySlug = {
@@ -187,38 +188,17 @@ export default async function ProductDetailPage({ params }: PageProps) {
             )}
           </div>
 
-          {/* Size Options */}
-          {optionList.length > 0 && (
-            <section className="space-y-2 rounded-xl border border-neutral-800 px-5 py-4">
-              <p className="text-xs uppercase tracking-[0.3em] text-white/60">Available Sizes</p>
-              <div className="flex flex-wrap gap-2">
-                {optionList.map((option) => (
-                  <span
-                    key={option}
-                    className="rounded-lg border border-white/20 px-4 py-2 text-sm text-white/80"
-                  >
-                    {option}
-                  </span>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Buy Button */}
-          <div className="pt-2">
-            {isInactive || isOutOfStock ? (
-              <span className="inline-flex w-full items-center justify-center rounded-full border border-white/20 px-6 py-4 text-sm font-semibold uppercase tracking-[0.3em] text-white/50">
-                {isInactive ? "Unavailable" : "Out of Stock"}
-              </span>
-            ) : (
-              <Link
-                href={`/checkout?product=${product.id}`}
-                className="inline-flex w-full items-center justify-center rounded-full bg-white px-6 py-4 text-sm font-semibold uppercase tracking-[0.3em] text-black transition hover:bg-white/90"
-              >
-                Buy Now
-              </Link>
-            )}
-          </div>
+          {/* Product Actions (Size, Quantity, Add to Cart, Buy Now) */}
+          <ProductActions
+            productId={product.id}
+            title={product.title}
+            slug={slug}
+            priceCents={product.price_cents}
+            stockQuantity={product.stock_quantity}
+            isActive={product.is_active}
+            options={optionList}
+            imageUrl={displayImages[0]}
+          />
         </div>
       </div>
 

@@ -14,13 +14,48 @@ const currencyFormatter = new Intl.NumberFormat("en-GB", {
 
 const PAYPAL_USERNAME = "CenchSaint";
 
+type OrderWithProduct = {
+  id: string;
+  order_number: string;
+  email: string;
+  quantity: number;
+  size: string | null;
+  total_amount_cents: number;
+  shipping_method: string;
+  shipping_name: string;
+  shipping_address: string;
+  shipping_city: string;
+  shipping_postcode: string;
+  status: string;
+  product: {
+    id: string;
+    title: string;
+    price_cents: number;
+    image_url: string | null;
+    image_urls: string[] | null;
+  } | {
+    id: string;
+    title: string;
+    price_cents: number;
+    image_url: string | null;
+    image_urls: string[] | null;
+  }[] | null;
+};
+
 export default async function ThankYouPage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const orderNumberParam = params?.order;
-  const orderNumber =
-    typeof orderNumberParam === "string" ? orderNumberParam : undefined;
+  
+  // Support both single order (?order=XXX) and multiple orders (?orders=XXX,YYY)
+  const singleOrder = typeof params?.order === "string" ? params.order : undefined;
+  const multipleOrders = typeof params?.orders === "string" ? params.orders : undefined;
+  
+  const orderNumbers = multipleOrders 
+    ? multipleOrders.split(",").filter(Boolean)
+    : singleOrder 
+      ? [singleOrder] 
+      : [];
 
-  if (!orderNumber) {
+  if (orderNumbers.length === 0) {
     return (
       <section className="mx-auto max-w-3xl space-y-4 px-4 py-16 text-white/80">
         <h1 className="text-3xl font-semibold text-white">Order not found.</h1>
@@ -34,7 +69,7 @@ export default async function ThankYouPage({ searchParams }: PageProps) {
 
   const supabase = await createSupabaseServerClient();
   
-  const { data: order, error } = await supabase
+  const { data: orders, error } = await supabase
     .from("orders")
     .select(`
       id,
@@ -51,15 +86,14 @@ export default async function ThankYouPage({ searchParams }: PageProps) {
       status,
       product:products(id, title, price_cents, image_url, image_urls)
     `)
-    .eq("order_number", orderNumber)
-    .maybeSingle();
+    .in("order_number", orderNumbers);
 
-  if (error || !order) {
-    console.error("[thank-you] Failed to retrieve order:", error?.message);
+  if (error || !orders || orders.length === 0) {
+    console.error("[thank-you] Failed to retrieve orders:", error?.message);
     return (
       <section className="mx-auto max-w-3xl space-y-4 px-4 py-16 text-white/80">
         <h1 className="text-3xl font-semibold text-white">Order not found.</h1>
-        <p>We couldn't find an order with that number. Please check your email or contact support.</p>
+        <p>We couldn't find orders with those numbers. Please check your email or contact support.</p>
         <Link href="/" className="text-sm uppercase tracking-[0.3em] text-white hover:underline">
           Back to shop
         </Link>
@@ -67,24 +101,19 @@ export default async function ThankYouPage({ searchParams }: PageProps) {
     );
   }
 
-  const productData = order.product as {
-    id: string;
-    title: string;
-    price_cents: number;
-    image_url: string | null;
-    image_urls: string[] | null;
-  } | {
-    id: string;
-    title: string;
-    price_cents: number;
-    image_url: string | null;
-    image_urls: string[] | null;
-  }[] | null;
-  const product = Array.isArray(productData) ? productData[0] : productData;
+  // Calculate totals
+  const totalAmountCents = orders.reduce((sum, o) => sum + o.total_amount_cents, 0);
+  const totalAmount = currencyFormatter.format(totalAmountCents / 100);
+  const isPendingPayment = orders.some((o) => o.status === "pending_payment");
+  const firstOrder = orders[0] as OrderWithProduct;
+  const isMultipleOrders = orders.length > 1;
 
-  const productTitle = product?.title ?? "Your order";
-  const totalAmount = currencyFormatter.format(order.total_amount_cents / 100);
-  const isPendingPayment = order.status === "pending_payment";
+  // Get product info helper
+  const getProductTitle = (order: OrderWithProduct) => {
+    const productData = order.product;
+    const product = Array.isArray(productData) ? productData[0] : productData;
+    return product?.title ?? "Unknown Product";
+  };
 
   return (
     <section className="mx-auto max-w-3xl space-y-8 px-4 py-16 text-white/80">
@@ -96,46 +125,66 @@ export default async function ThankYouPage({ searchParams }: PageProps) {
           {isPendingPayment ? "Almost there!" : "Thank you!"}
         </h1>
         <p>
-          We've sent a confirmation to <span className="text-white">{order.email}</span>
+          We've sent a confirmation to <span className="text-white">{firstOrder.email}</span>
         </p>
       </div>
 
       {/* Order Summary */}
-      <div className="rounded-2xl border border-white/10 bg-black/20 p-6 text-sm text-white/80">
-        <p className="text-xs uppercase tracking-[0.3em] text-white/60">Order details</p>
-        <h2 className="text-2xl font-semibold text-white">{productTitle}</h2>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1">
-            <p className="text-xs uppercase tracking-[0.3em] text-white/60">Order number</p>
-            <p className="text-xl font-semibold text-white font-mono">{order.order_number}</p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-xs uppercase tracking-[0.3em] text-white/60">Total</p>
+      <div className="rounded-2xl border border-white/10 bg-black/20 p-6 space-y-4">
+        <p className="text-xs uppercase tracking-[0.3em] text-white/60">
+          {isMultipleOrders ? `${orders.length} items in your order` : "Order details"}
+        </p>
+        
+        {orders.map((order) => {
+          const typedOrder = order as OrderWithProduct;
+          return (
+            <div key={order.id} className="flex justify-between items-start border-b border-white/10 pb-4 last:border-0 last:pb-0">
+              <div>
+                <h3 className="font-semibold text-white">{getProductTitle(typedOrder)}</h3>
+                <p className="text-sm text-white/60">
+                  {order.size && `Size: ${order.size} · `}
+                  Qty: {order.quantity}
+                </p>
+                <p className="text-xs text-white/40 font-mono">{order.order_number}</p>
+              </div>
+              <p className="font-semibold text-white">
+                {currencyFormatter.format(order.total_amount_cents / 100)}
+              </p>
+            </div>
+          );
+        })}
+
+        {isMultipleOrders && (
+          <div className="flex justify-between items-center pt-2 border-t border-white/10">
+            <p className="font-semibold text-white">Total</p>
             <p className="text-2xl font-semibold text-white">{totalAmount}</p>
           </div>
-          <div className="space-y-1">
-            <p className="text-xs uppercase tracking-[0.3em] text-white/60">Quantity</p>
-            <p className="text-xl font-semibold text-white">{order.quantity}</p>
-          </div>
-          {order.size && (
+        )}
+        
+        {!isMultipleOrders && (
+          <div className="grid gap-4 sm:grid-cols-2 pt-2">
             <div className="space-y-1">
-              <p className="text-xs uppercase tracking-[0.3em] text-white/60">Size</p>
-              <p className="text-xl font-semibold text-white">{order.size}</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-white/60">Order number</p>
+              <p className="text-xl font-semibold text-white font-mono">{firstOrder.order_number}</p>
             </div>
-          )}
-        </div>
+            <div className="space-y-1">
+              <p className="text-xs uppercase tracking-[0.3em] text-white/60">Total</p>
+              <p className="text-2xl font-semibold text-white">{totalAmount}</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Shipping Details */}
       <div className="rounded-2xl border border-white/10 bg-black/20 p-6 text-sm text-white/80">
         <p className="text-xs uppercase tracking-[0.3em] text-white/60">Shipping to</p>
         <div className="mt-2 text-white">
-          <p className="font-semibold">{order.shipping_name}</p>
-          <p>{order.shipping_address}</p>
-          <p>{order.shipping_city}, {order.shipping_postcode}</p>
+          <p className="font-semibold">{firstOrder.shipping_name}</p>
+          <p>{firstOrder.shipping_address}</p>
+          <p>{firstOrder.shipping_city}, {firstOrder.shipping_postcode}</p>
         </div>
         <p className="mt-3 text-xs text-white/50">
-          {order.shipping_method === "next_day" ? "Next Day Delivery" : "Standard Delivery (3-5 days)"}
+          {firstOrder.shipping_method === "next_day" ? "Next Day Delivery" : "Standard Delivery (3-5 days)"}
         </p>
       </div>
 
@@ -153,7 +202,7 @@ export default async function ThankYouPage({ searchParams }: PageProps) {
               <li>
                 Go to{" "}
                 <a
-                  href={`https://paypal.me/${PAYPAL_USERNAME}/${(order.total_amount_cents / 100).toFixed(2)}GBP`}
+                  href={`https://paypal.me/${PAYPAL_USERNAME}/${(totalAmountCents / 100).toFixed(2)}GBP`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-white underline hover:text-amber-400"
@@ -163,13 +212,15 @@ export default async function ThankYouPage({ searchParams }: PageProps) {
               </li>
               <li>Send <span className="font-semibold text-white">{totalAmount}</span></li>
               <li>
-                Add your order number as the reference:{" "}
-                <span className="font-mono font-semibold text-white">{order.order_number}</span>
+                Add your order number{isMultipleOrders ? "s" : ""} as the reference:{" "}
+                <span className="font-mono font-semibold text-white">
+                  {orderNumbers.join(", ")}
+                </span>
               </li>
             </ol>
           </div>
           <a
-            href={`https://paypal.me/${PAYPAL_USERNAME}/${(order.total_amount_cents / 100).toFixed(2)}GBP`}
+            href={`https://paypal.me/${PAYPAL_USERNAME}/${(totalAmountCents / 100).toFixed(2)}GBP`}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-4 inline-flex w-full items-center justify-center rounded-full bg-[#0070ba] px-6 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-[#005ea6]"
@@ -188,10 +239,7 @@ export default async function ThankYouPage({ searchParams }: PageProps) {
           <div className="flex items-center gap-2">
             <div className="h-3 w-3 rounded-full bg-green-500" />
             <p className="text-sm text-green-400">
-              {order.status === "paid" && "Payment received - Processing your order"}
-              {order.status === "processing" && "Your order is being prepared"}
-              {order.status === "shipped" && "Your order has been shipped"}
-              {order.status === "delivered" && "Your order has been delivered"}
+              Payment received - Processing your order
             </p>
           </div>
         </div>
