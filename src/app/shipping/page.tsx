@@ -3,81 +3,109 @@ export default function ShippingPage() {
     <section className="mx-auto max-w-3xl space-y-8 px-4 py-12 text-white/90">
       <header className="space-y-2">
         <p className="text-xs uppercase tracking-[0.4em] text-white/50">Support</p>
-        <h1 className="text-3xl font-semibold text-white">Shipping &amp; Fulfilment</h1>
+        <h1 className="text-3xl font-semibold text-white">Shipping &amp; Returns</h1>
       </header>
 
       <article className="space-y-5 text-sm leading-relaxed text-white/80">
         <section className="space-y-2">
-          <h2 className="text-base font-semibold text-white">Where We Ship</h2>
+          <h2 className="text-base font-semibold text-white">Shipping Areas</h2>
           <p>
-            Prizes ship from the United Kingdom. UK shipping is included. International delivery is
-            available on most drops unless a listing states otherwise. If we cannot ship to your
-            country, we will contact you to discuss alternatives.
+            We currently ship within the United Kingdom only. We're working on expanding 
+            to international shipping in the future.
           </p>
         </section>
 
         <section className="space-y-2">
-          <h2 className="text-base font-semibold text-white">Delivery Timelines</h2>
-          <p>
-            After winner verification we prepare the prize within 2–3 working days. UK orders usually
-            arrive within 2–7 working days. International shipments depend on customs clearance and
-            local couriers, so please allow extra time.
+          <h2 className="text-base font-semibold text-white">Shipping Options</h2>
+          <div className="space-y-3">
+            <div className="rounded-lg border border-white/10 p-4">
+              <p className="font-semibold text-white">Standard Delivery — FREE</p>
+              <p className="text-white/60">3-5 business days</p>
+            </div>
+            <div className="rounded-lg border border-white/10 p-4">
+              <p className="font-semibold text-white">Next Day Delivery — £5.99</p>
+              <p className="text-white/60">Order before 2pm for next working day delivery</p>
+            </div>
+          </div>
+          <p className="mt-2">
+            Free standard shipping on all orders over £50.
           </p>
         </section>
 
         <section className="space-y-2">
-          <h2 className="text-base font-semibold text-white">Tracking</h2>
+          <h2 className="text-base font-semibold text-white">Order Processing</h2>
           <p>
-            Every parcel includes tracked shipping. We email the tracking link as soon as the courier
-            scans the package. Contact us if you do not receive tracking within 48 hours of the draw.
+            Orders are processed once payment is confirmed. We aim to dispatch orders within 
+            1-2 business days. You'll receive a tracking number via email once your order ships.
+          </p>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="text-base font-semibold text-white">Tracking Your Order</h2>
+          <p>
+            Every order includes tracked shipping. We'll email your tracking number as soon as 
+            the courier collects your parcel. If you haven't received tracking within 3 business 
+            days of placing your order, please contact us.
           </p>
         </section>
 
         <section className="space-y-2">
           <h2 className="text-base font-semibold text-white">Packaging</h2>
           <p>
-            Items are inspected, photographed, and packed using protective materials. High-value
-            products may be double-boxed or shipped with tamper seals to guarantee authenticity on
-            arrival.
+            All items are carefully packed to ensure they arrive in perfect condition. 
+            High-value items may be double-boxed for extra protection.
+          </p>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="text-base font-semibold text-white">Returns Policy</h2>
+          <p>
+            We accept returns within 14 days of delivery. Items must be:
+          </p>
+          <ul className="list-disc space-y-1 pl-5 mt-2">
+            <li>Unworn and in original condition</li>
+            <li>With all tags attached</li>
+            <li>In original packaging</li>
+          </ul>
+          <p className="mt-2">
+            To initiate a return, please contact us via Instagram @saintarchive88 with your 
+            order number and reason for return.
+          </p>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="text-base font-semibold text-white">Return Shipping</h2>
+          <p>
+            Return shipping costs are the responsibility of the customer, unless the item 
+            is faulty or we made an error. We recommend using a tracked service for returns.
+          </p>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="text-base font-semibold text-white">Refunds</h2>
+          <p>
+            Once we receive and inspect your return, we'll process your refund within 5-7 
+            business days. Refunds will be issued to your original payment method (PayPal).
           </p>
         </section>
 
         <section className="space-y-2">
           <h2 className="text-base font-semibold text-white">Damaged or Lost Parcels</h2>
           <p>
-            If a parcel arrives damaged or appears lost, email us immediately with photos or the
-            last tracking update. We will liaise with the courier and keep you informed. Where
-            possible we will repair, replace, or offer a suitable alternative.
-          </p>
-        </section>
-
-        <section className="space-y-2">
-          <h2 className="text-base font-semibold text-white">Winner Verification</h2>
-          <p>
-            Before dispatch we may request ID or proof of address. Verification protects legitimate
-            entrants and prevents fraudulent claims. Shipments will only be released once verification
-            is complete.
-          </p>
-        </section>
-
-        <section className="space-y-2">
-          <h2 className="text-base font-semibold text-white">Customs &amp; Duties</h2>
-          <p>
-            For deliveries outside the UK, winners are responsible for customs duties, VAT, and
-            import fees. Refusing to pay these charges may result in the parcel being returned or
-            destroyed, and we cannot compensate for losses caused by refusal.
+            If your parcel arrives damaged or appears to be lost in transit, please contact 
+            us immediately with photos (for damage) or the last tracking update. We'll work 
+            with the courier to resolve the issue and arrange a replacement or refund.
           </p>
         </section>
 
         <section className="space-y-2">
           <h2 className="text-base font-semibold text-white">Contact</h2>
           <p>
-            Shipping queries can be sent to shipping@luciansaint.com. Include your raffle name,
-            order reference, and tracking number so we can respond quickly.
+            For shipping enquiries, please contact us via Instagram @saintarchive88. Include 
+            your order number so we can help you quickly.
           </p>
         </section>
       </article>
     </section>
   );
 }
-

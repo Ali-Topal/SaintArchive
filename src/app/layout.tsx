@@ -17,7 +17,7 @@ const baseUrl =
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: "Saint Archive",
-  description: "A luxury raffle experience in the making.",
+  description: "Authentic luxury streetwear, sneakers, and accessories.",
   icons: {
     icon: "/IMG_1176.png",
     shortcut: "/IMG_1176.png",
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Saint Archive",
-    description: "A luxury raffle experience in the making.",
+    description: "Authentic luxury streetwear, sneakers, and accessories.",
     url: baseUrl,
     siteName: "Saint Archive",
     images: [
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Saint Archive",
-    description: "A luxury raffle experience in the making.",
+    description: "Authentic luxury streetwear, sneakers, and accessories.",
     images: ["/og-image.jpg"],
   },
 };

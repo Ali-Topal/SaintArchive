@@ -53,7 +53,7 @@ export default function NewsletterForm({ showHeading = true }: NewsletterFormPro
             Stay in the circle
           </p>
           <h3 className="mt-2 text-2xl font-light tracking-[0.2em] text-foreground">
-            Drops, winners & early access
+            New drops & early access
           </h3>
         </>
       )}

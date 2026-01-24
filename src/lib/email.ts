@@ -10,17 +10,19 @@ type ShippingDetails = {
 
 type SendOrderConfirmationEmailParams = {
   email: string;
-  raffleId: string;
-  raffleTitle: string;
-  productName: string;
-  ticketCount: number;
-  entriesCount: number;
+  orderNumber: string;
+  productTitle: string;
+  productImageUrl?: string;
+  quantity: number;
   size?: string;
+  totalAmountCents: number;
+  shippingMethod: string;
   shippingDetails: ShippingDetails;
-  emailImageUrl: string;
 };
 
 const resend = new Resend(process.env.RESEND_API_KEY!);
+
+const PAYPAL_USERNAME = "CenchSaint";
 
 const template = `
 <!DOCTYPE html>
@@ -29,129 +31,125 @@ const template = `
   <meta charset="UTF-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Entry Confirmed</title>
+  <title>Order Confirmation</title>
 </head>
-<body style="margin:0; padding:0; background:#ffffff; font-family:Arial, Helvetica, sans-serif;">
+<body style="margin:0; padding:0; background:#f5f5f5; font-family:Arial, Helvetica, sans-serif;">
 
-  <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background:#ffffff; padding:30px 0;">
+  <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background:#f5f5f5; padding:30px 0;">
     <tr>
       <td align="center">
 
-        <!-- Outer container -->
-        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px; background:#ffffff; border-collapse:collapse;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px; background:#ffffff; border-collapse:collapse; border-radius:12px; overflow:hidden;">
 
-          <!-- BRAND HEADER -->
+          <!-- HEADER -->
           <tr>
-            <td style="padding:0 0 20px 0; text-align:center;">
-              <div style="font-size:26px; font-weight:800; letter-spacing:1px; color:#000000;">
+            <td style="background:#0a0a0a; padding:30px; text-align:center;">
+              <div style="font-size:24px; font-weight:700; letter-spacing:4px; color:#ffffff;">
                 SAINT ARCHIVE
               </div>
             </td>
           </tr>
 
-          <!-- MAIN TITLE -->
+          <!-- MAIN CONTENT -->
           <tr>
-            <td style="padding:0 0 10px 0; text-align:center;">
-              <div style="font-size:22px; font-weight:700; color:#000000;">
-                Entry Confirmed
+            <td style="padding:30px;">
+              
+              <!-- Order Status -->
+              <div style="background:#fef3c7; border-radius:8px; padding:16px; margin-bottom:24px; text-align:center;">
+                <div style="font-size:12px; text-transform:uppercase; letter-spacing:2px; color:#92400e; margin-bottom:4px;">
+                  Order Placed
+                </div>
+                <div style="font-size:18px; font-weight:700; color:#78350f;">
+                  Payment Required
+                </div>
               </div>
-            </td>
-          </tr>
 
-          <!-- SUBTITLE -->
-          <tr>
-            <td style="padding:0 0 25px 0; text-align:center;">
-              <div style="font-size:15px; color:#333333;">
-                You're officially entered into the raffle.
-              </div>
-            </td>
-          </tr>
-
-          <!-- RAFFLE IMAGE -->
-          <tr>
-            <td>
-              <img 
-                src="{{emailImageUrl}}" 
-                alt="{{productName}}" 
-                width="600" 
-                height="600"
-                style="border-radius:12px; display:block; margin:20px auto;" 
-              />
-            </td>
-          </tr>
-
-          <!-- INFO CARD -->
-          <tr>
-            <td style="padding:0;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e5e5; border-radius:12px; padding:20px;">
-                
-                <tr>
-                  <td style="font-size:18px; font-weight:700; color:#000; padding-bottom:10px; text-align:center;">
-                    {{raffleTitle}}
-                  </td>
-                </tr>
-
-              {{sizeSection}}
-
-                <tr>
-                  <td style="font-size:15px; color:#000; padding-bottom:6px; text-align:center;">
-                    <strong>Entries:</strong> {{entriesCount}}
-                  </td>
-                </tr>
-
-                <!-- SHIPPING DETAILS -->
-                <tr>
-                  <td style="font-size:15px; color:#000; padding-top:12px; padding-bottom:4px; font-weight:700; text-align:center;">
-                    Shipping Details
-                  </td>
-                </tr>
-
-                <tr>
-                  <td style="font-size:14px; color:#333;">
-                    {{shipping_name}}<br/>
-                    {{shipping_address}}<br/>
-                    {{shipping_city}}, {{shipping_postcode}}<br/>
-                    {{shipping_country}}
-                  </td>
-                </tr>
-
-              </table>
-            </td>
-          </tr>
-
-          <!-- THANK YOU -->
-          <tr>
-            <td style="padding:25px 0 5px 0;">
-              <p style="text-align:center; font-size:14px; color:#333;">
-                Thank you for your purchase! You're officially entered into the raffle.
+              <!-- Greeting -->
+              <p style="font-size:16px; color:#333; margin:0 0 20px 0;">
+                Thank you for your order! Your order has been placed successfully.
               </p>
-            </td>
-          </tr>
 
-          <!-- BUTTON -->
-          <tr>
-            <td style="padding:30px 0 20px 0; text-align:center;">
-              <a 
-                href="{{raffleLink}}" 
-                style="
-                  background:#e50914;
-                  padding:14px 26px;
-                  border-radius:8px;
-                  color:#ffffff;
-                  text-decoration:none;
-                  font-size:15px;
-                  font-weight:700;
-                  letter-spacing:0.5px;
-                  display:inline-block;
-                "
-              >View Your Entry</a>
+              <!-- Order Number -->
+              <div style="background:#f5f5f5; border-radius:8px; padding:20px; margin-bottom:24px; text-align:center;">
+                <div style="font-size:12px; text-transform:uppercase; letter-spacing:2px; color:#666; margin-bottom:8px;">
+                  Order Number
+                </div>
+                <div style="font-size:28px; font-weight:700; color:#000; font-family:monospace;">
+                  {{orderNumber}}
+                </div>
+              </div>
+
+              <!-- Product Details -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+                <tr>
+                  {{productImageHtml}}
+                  <td style="vertical-align:top; padding-left:{{imagePadding}};">
+                    <div style="font-size:18px; font-weight:700; color:#000; margin-bottom:4px;">
+                      {{productTitle}}
+                    </div>
+                    {{sizeHtml}}
+                    <div style="font-size:14px; color:#666; margin-bottom:8px;">
+                      Quantity: {{quantity}}
+                    </div>
+                    <div style="font-size:20px; font-weight:700; color:#000;">
+                      {{totalAmount}}
+                    </div>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Shipping Details -->
+              <div style="border:1px solid #e5e5e5; border-radius:8px; padding:20px; margin-bottom:24px;">
+                <div style="font-size:12px; text-transform:uppercase; letter-spacing:2px; color:#666; margin-bottom:12px;">
+                  Shipping To
+                </div>
+                <div style="font-size:14px; color:#333; line-height:1.6;">
+                  <strong>{{shippingName}}</strong><br/>
+                  {{shippingAddress}}<br/>
+                  {{shippingCity}}, {{shippingPostcode}}<br/>
+                  {{shippingCountry}}
+                </div>
+                <div style="font-size:12px; color:#666; margin-top:12px;">
+                  {{shippingMethodLabel}}
+                </div>
+              </div>
+
+              <!-- Payment Instructions -->
+              <div style="background:#0a0a0a; border-radius:8px; padding:24px; color:#fff;">
+                <div style="font-size:12px; text-transform:uppercase; letter-spacing:2px; color:#fbbf24; margin-bottom:12px;">
+                  ⚡ Complete Your Payment
+                </div>
+                <p style="font-size:14px; color:#ccc; margin:0 0 16px 0; line-height:1.6;">
+                  To complete your order, please send payment via PayPal:
+                </p>
+                <ol style="font-size:14px; color:#fff; margin:0 0 20px 0; padding-left:20px; line-height:1.8;">
+                  <li>Go to <a href="https://paypal.me/{{paypalUsername}}" style="color:#fbbf24;">PayPal.me/{{paypalUsername}}</a></li>
+                  <li>Send <strong>{{totalAmount}}</strong></li>
+                  <li>Use order number <strong style="font-family:monospace;">{{orderNumber}}</strong> as reference</li>
+                </ol>
+                <div style="text-align:center;">
+                  <a href="https://paypal.me/{{paypalUsername}}/{{totalAmountDecimal}}GBP" 
+                     style="display:inline-block; background:#0070ba; color:#fff; padding:14px 28px; border-radius:8px; text-decoration:none; font-weight:700; font-size:14px;">
+                    Pay with PayPal
+                  </a>
+                </div>
+                <p style="font-size:12px; color:#888; margin:16px 0 0 0; text-align:center;">
+                  Your order will be processed once payment is confirmed.
+                </p>
+              </div>
+
             </td>
           </tr>
 
           <!-- FOOTER -->
           <tr>
-            <td style="text-align:center; padding-top:20px; font-size:12px; color:#999;">
-              © {{year}} Saint Archive. All rights reserved.
+            <td style="background:#f5f5f5; padding:24px; text-align:center;">
+              <p style="font-size:12px; color:#666; margin:0 0 8px 0;">
+                Questions? Contact us on Instagram @saintarchive88
+              </p>
+              <p style="font-size:12px; color:#999; margin:0;">
+                © {{year}} Saint Archive. All rights reserved.
+              </p>
             </td>
           </tr>
 
@@ -167,60 +165,72 @@ const template = `
 
 export async function sendOrderConfirmationEmail({
   email,
-  raffleId,
-  raffleTitle,
-  productName,
-  ticketCount,
-  entriesCount,
+  orderNumber,
+  productTitle,
+  productImageUrl,
+  quantity,
   size,
+  totalAmountCents,
+  shippingMethod,
   shippingDetails,
-  emailImageUrl,
 }: SendOrderConfirmationEmailParams) {
   if (!process.env.RESEND_API_KEY) {
     console.warn("[email] RESEND_API_KEY is not configured. Skipping email send.");
     return;
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, "") ?? "https://saintarchive.com";
-  const raffleLink = `${baseUrl}/raffles/${raffleId}`;
+  const totalAmountFormatted = new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: "GBP",
+  }).format(totalAmountCents / 100);
 
-const sizeSection = size
-  ? `
-              <tr>
-                <td style="font-size:15px; color:#000; padding-bottom:6px; text-align:center;">
-                  <strong>Size:</strong> {{size}}
-                </td>
-              </tr>
-            `
-  : "";
+  const totalAmountDecimal = (totalAmountCents / 100).toFixed(2);
 
-  const normalizedEntriesCount =
-    Number.isFinite(entriesCount) && entriesCount > 0 ? entriesCount : ticketCount;
+  const shippingMethodLabel =
+    shippingMethod === "next_day"
+      ? "Next Day Delivery"
+      : "Standard Delivery (3-5 days)";
+
+  const productImageHtml = productImageUrl
+    ? `<td style="width:100px; vertical-align:top;">
+        <img src="${productImageUrl}" alt="${productTitle}" width="100" height="100" 
+             style="border-radius:8px; display:block; object-fit:cover;" />
+       </td>`
+    : "";
+
+  const imagePadding = productImageUrl ? "16px" : "0";
+
+  const sizeHtml = size
+    ? `<div style="font-size:14px; color:#666; margin-bottom:4px;">Size: ${size}</div>`
+    : "";
 
   const html = template
-    .replace(/{{emailImageUrl}}/g, emailImageUrl || "")
-    .replace(/{{productName}}/g, productName || "")
-    .replace(/{{raffleTitle}}/g, raffleTitle || "")
-    .replace(/{{entriesCount}}/g, String(normalizedEntriesCount || ""))
-    .replace(/{{sizeSection}}/g, sizeSection)
-    .replace(/{{size}}/g, size || "")
-    .replace(/{{shipping_name}}/g, shippingDetails.name || "")
-    .replace(/{{shipping_address}}/g, shippingDetails.address || "")
-    .replace(/{{shipping_city}}/g, shippingDetails.city || "")
-    .replace(/{{shipping_postcode}}/g, shippingDetails.postcode || "")
-    .replace(/{{shipping_country}}/g, shippingDetails.country || "")
-    .replace(/{{raffleLink}}/g, raffleLink)
+    .replace(/{{orderNumber}}/g, orderNumber)
+    .replace(/{{productTitle}}/g, productTitle)
+    .replace(/{{productImageHtml}}/g, productImageHtml)
+    .replace(/{{imagePadding}}/g, imagePadding)
+    .replace(/{{sizeHtml}}/g, sizeHtml)
+    .replace(/{{quantity}}/g, String(quantity))
+    .replace(/{{totalAmount}}/g, totalAmountFormatted)
+    .replace(/{{totalAmountDecimal}}/g, totalAmountDecimal)
+    .replace(/{{shippingName}}/g, shippingDetails.name || "")
+    .replace(/{{shippingAddress}}/g, shippingDetails.address || "")
+    .replace(/{{shippingCity}}/g, shippingDetails.city || "")
+    .replace(/{{shippingPostcode}}/g, shippingDetails.postcode || "")
+    .replace(/{{shippingCountry}}/g, shippingDetails.country || "United Kingdom")
+    .replace(/{{shippingMethodLabel}}/g, shippingMethodLabel)
+    .replace(/{{paypalUsername}}/g, PAYPAL_USERNAME)
     .replace(/{{year}}/g, new Date().getFullYear().toString());
 
   try {
     await resend.emails.send({
-      from: "Saint Archive <purchases@saintarchive.co.uk>",
+      from: "Saint Archive <orders@saintarchive.co.uk>",
       to: email,
-      subject: `Your Entry Is Confirmed – ${raffleTitle}`,
+      subject: `Order Confirmed - ${orderNumber}`,
       html,
     });
+    console.log(`[email] Order confirmation sent to ${email} for ${orderNumber}`);
   } catch (error) {
-    console.error("[email] Failed to send confirmation email:", error);
+    console.error("[email] Failed to send order confirmation:", error);
   }
 }
-

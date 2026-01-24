@@ -1,54 +1,54 @@
 export default function FaqPage() {
   const faqs = [
     {
-      question: "What is Lucian Saint Raffles?",
+      question: "What is Saint Archive?",
       answer:
-        "We run limited prize competitions that give our community the chance to win hard-to-find streetwear, accessories, and collectibles. Each drop is transparent, time-limited, and managed from a single dashboard.",
+        "We curate and sell authentic luxury streetwear, sneakers, and accessories. Every item is verified for authenticity before listing.",
     },
     {
-      question: "How do the raffles work?",
+      question: "How do I place an order?",
       answer:
-        "Every drop lists the prize, ticket price, closing date, and live entry count. Once the timer ends, we verify payments, run the draw, and publish the winner.",
+        "Browse our collection, select your size, and click 'Buy Now'. Fill in your shipping details and you'll receive an order number. Then complete payment via PayPal using your order number as the reference.",
     },
     {
-      question: "How do I enter?",
+      question: "What payment methods do you accept?",
       answer:
-        "Select the active drop, choose the number of tickets you want, and complete checkout through Stripe. You will receive a confirmation email once payment clears.",
+        "We accept PayPal payments only. This provides buyer protection and secure transactions for both parties.",
     },
     {
-      question: "How is the winner chosen?",
+      question: "How does the payment process work?",
       answer:
-        "We export the full entry list, assign sequential numbers, and select a winner using an independent random number generator. The process is recorded and may be shared on request.",
+        "After placing your order, you'll receive an order number. Send payment to our PayPal (@CenchSaint) with your order number as the reference. Once we confirm payment, we'll process your order.",
     },
     {
-      question: "How will I be notified if I win?",
+      question: "How long does shipping take?",
       answer:
-        "Winners receive an email within 24 hours of the draw. We may also contact you via phone or Instagram if additional verification is required.",
+        "Standard delivery takes 3-5 business days within the UK. Next day delivery is available at checkout for an additional fee.",
     },
     {
-      question: "Are entries refundable?",
+      question: "Do you ship internationally?",
       answer:
-        "All entries are final once payment is processed. Please review the drop details carefully before confirming your purchase.",
+        "We currently only ship within the UK. We're working on expanding to international shipping in the future.",
     },
     {
-      question: "What happens if a raffle doesn’t sell out?",
+      question: "Are all items authentic?",
       answer:
-        "We reserve the right to proceed with the draw regardless of ticket volume. If a competition must be cancelled for operational reasons, all entrants will be refunded automatically.",
+        "Yes, every item is 100% authentic. We source from trusted suppliers and verify each piece before listing. If you have any concerns about authenticity, please contact us.",
     },
     {
-      question: "Is this available internationally?",
+      question: "Can I return or exchange an item?",
       answer:
-        "We primarily serve UK entrants, but most raffles are open worldwide unless a prize description states otherwise. Winners outside the UK are responsible for customs and import duties.",
+        "We accept returns within 14 days of delivery for unworn items in original condition with tags attached. Please contact us to arrange a return.",
     },
     {
-      question: "What payment methods are accepted?",
+      question: "What if my item arrives damaged?",
       answer:
-        "We currently accept major debit and credit cards via Stripe. Apple Pay and Google Pay may be available depending on your device and browser.",
+        "Please contact us immediately with photos of the damage. We'll arrange a replacement or refund as quickly as possible.",
     },
     {
-      question: "When are winners announced?",
+      question: "How can I track my order?",
       answer:
-        "Winners are announced within 24 hours of the draw closing. We update the raffle page, notify the community on social media, and contact the winner directly.",
+        "Once your order ships, you'll receive a tracking number via email. You can use this to track your package with the courier.",
     },
   ];
 
@@ -69,4 +69,3 @@ export default function FaqPage() {
     </section>
   );
 }
-

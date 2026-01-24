@@ -3,10 +3,9 @@ import { createSupabaseServerClient } from "@/lib/supabaseClient";
 export type FilterParams = {
   brand?: string[];
   category?: string[];
-  size?: string[];
 };
 
-export type RaffleRecord = {
+export type ProductRecord = {
   id: string;
   title: string;
   color: string | null;
@@ -14,22 +13,19 @@ export type RaffleRecord = {
   options: string[] | null;
   image_url: string | null;
   image_urls: string[] | null;
-  ticket_price_cents: number;
-  closes_at: string | null;
-  opens_at: string | null;
-  status: string;
-  max_tickets: number | null;
-  max_entries_per_user: number | null;
+  price_cents: number;
+  is_active: boolean;
+  stock_quantity: number;
   brand: string | null;
   slug?: string | null;
   sort_priority: number | null;
 };
 
-const raffleSelect =
-  "id,title,color,description,options,image_url,image_urls,ticket_price_cents,closes_at,opens_at,status,max_tickets,max_entries_per_user,brand,slug,sort_priority";
+const productSelect =
+  "id,title,color,description,options,image_url,image_urls,price_cents,is_active,stock_quantity,brand,slug,sort_priority";
 
 type FilterResult = {
-  raffles: RaffleRecord[];
+  products: ProductRecord[];
   availableBrands: string[];
   appliedFilters: FilterParams;
   totalCount: number;
@@ -43,22 +39,22 @@ const normalizeOption = (value: string | null | undefined) =>
 
 type ServerSupabaseClient = Awaited<ReturnType<typeof createSupabaseServerClient>>;
 
-export async function getFilteredRaffles(
+export async function getFilteredProducts(
   filters: FilterParams = {},
   page = 1,
   pageSize = 9,
   existingClient?: ServerSupabaseClient
 ): Promise<FilterResult> {
-  const supabase =
-    existingClient ?? (await createSupabaseServerClient());
+  const supabase = existingClient ?? (await createSupabaseServerClient());
 
+  // Get available brands from active products
   const { data: brandRows, error: brandsError } = await supabase
-    .from("raffles")
+    .from("products")
     .select("brand")
-    .eq("status", "active");
+    .eq("is_active", true);
 
   if (brandsError) {
-    console.error("[raffles] Failed to fetch brands:", brandsError.message);
+    console.error("[products] Failed to fetch brands:", brandsError.message);
   }
 
   const availableBrands = Array.from(
@@ -80,11 +76,11 @@ export async function getFilteredRaffles(
 
   const buildQuery = () => {
     let query = supabase
-      .from("raffles")
-      .select(raffleSelect, { count: "exact" })
-      .eq("status", "active")
+      .from("products")
+      .select(productSelect, { count: "exact" })
+      .eq("is_active", true)
       .order("sort_priority", { ascending: true, nullsFirst: true })
-      .order("closes_at", { ascending: true, nullsFirst: false });
+      .order("title", { ascending: true });
 
     if (sanitizedBrands.length) {
       query = query.in("brand", sanitizedBrands);
@@ -101,11 +97,11 @@ export async function getFilteredRaffles(
   let to = from + safePageSize - 1;
 
   const initialResult = await buildQuery().range(from, to);
-  let raffles = initialResult.data ?? [];
-  let count = initialResult.count ?? raffles.length;
+  let products = initialResult.data ?? [];
+  let count = initialResult.count ?? products.length;
 
   if (initialResult.error) {
-    console.error("[raffles] Failed to fetch raffles:", initialResult.error.message);
+    console.error("[products] Failed to fetch products:", initialResult.error.message);
   }
 
   if (count > 0 && from >= count) {
@@ -114,25 +110,24 @@ export async function getFilteredRaffles(
     to = from + safePageSize - 1;
 
     const retry = await buildQuery().range(from, to);
-    raffles = retry.data ?? [];
+    products = retry.data ?? [];
     count = retry.count ?? count;
 
     if (retry.error) {
-      console.error("[raffles] Failed to fetch raffles:", retry.error.message);
+      console.error("[products] Failed to fetch products:", retry.error.message);
     }
   }
 
-  const totalCount = count ?? raffles.length ?? 0;
+  const totalCount = count ?? products.length ?? 0;
   const totalPages =
     totalCount > 0 ? Math.max(1, Math.ceil(totalCount / safePageSize)) : 1;
 
   return {
-    raffles: raffles ?? [],
+    products: products ?? [],
     availableBrands,
     appliedFilters: {
       brand: sanitizedBrands,
       category: filters.category ?? [],
-      size: filters.size ?? [],
     },
     totalCount,
     totalPages,
@@ -140,4 +135,3 @@ export async function getFilteredRaffles(
     pageSize: safePageSize,
   };
 }
-

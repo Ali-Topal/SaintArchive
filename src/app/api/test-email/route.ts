@@ -4,22 +4,20 @@ import { sendOrderConfirmationEmail } from "@/lib/email";
 export async function GET() {
   await sendOrderConfirmationEmail({
     email: "test@example.com",
-    raffleTitle: "Test Raffle",
-    raffleId: "test123",
-    productName: "Test Raffle",
-    ticketCount: 1,
-    entriesCount: 1,
-    size: "Test Option",
+    orderNumber: "ORD-TEST01",
+    productTitle: "Test Product",
+    quantity: 1,
+    size: "M",
+    totalAmountCents: 4999,
+    shippingMethod: "standard",
     shippingDetails: {
       name: "Test User",
       address: "123 Test Street",
       city: "London",
       postcode: "E1 1AA",
-      country: "UK",
+      country: "United Kingdom",
     },
-    emailImageUrl: "https://www.saintarchive.co.uk/email-images/test123.webp",
   });
 
   return NextResponse.json({ status: "sent" });
 }
-

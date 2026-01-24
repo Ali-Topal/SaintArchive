@@ -7,9 +7,8 @@ type LayoutProps = {
 };
 
 const navItems = [
-  { href: "/", label: "Home" },
-  { href: "/winners", label: "Winners" },
-  { href: "/info", label: "How it Works" },
+  { href: "/", label: "Shop" },
+  { href: "/about", label: "About" },
 ];
 
 const socialLinks = [
@@ -81,13 +80,12 @@ export default function Layout({ children }: LayoutProps) {
               Privacy Policy
             </Link>
             <Link href="/shipping" className="hover:text-white">
-              Shipping &amp; Fulfilment
+              Shipping &amp; Returns
             </Link>
           </div>
-          <p className="mt-4 text-[#777]">© {year} Lucian Saint Raffles. All rights reserved.</p>
+          <p className="mt-4 text-[#777]">© {year} Saint Archive. All rights reserved.</p>
         </footer>
       </div>
     </div>
   );
 }
-

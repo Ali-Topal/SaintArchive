@@ -1,4 +1,4 @@
-import RaffleList from "@/components/RaffleList";
+import ProductList from "@/components/ProductList";
 
 export const revalidate = 180;
 
@@ -12,5 +12,5 @@ export default async function HomePage({ searchParams }: HomePageProps = {}) {
       ? await searchParams
       : ({} as Record<string, string | string[] | undefined>);
 
-  return <RaffleList searchParams={resolvedSearchParams} />;
+  return <ProductList searchParams={resolvedSearchParams} />;
 }
