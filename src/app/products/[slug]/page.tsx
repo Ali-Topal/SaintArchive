@@ -225,16 +225,6 @@ export default async function ProductDetailPage({ params }: PageProps) {
           <p>• UK shipping only</p>
         </div>
       </section>
-
-      {/* Back Link */}
-      <section className="rounded-xl border-t border-neutral-800 pt-6">
-        <Link
-          href="/"
-          className="text-xs uppercase tracking-[0.3em] text-white/60 hover:text-white"
-        >
-          ← Continue Shopping
-        </Link>
-      </section>
     </div>
   );
 }
