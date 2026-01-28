@@ -65,6 +65,27 @@ export default function AnimatedContent({
     const offset = reverse ? -distance : distance;
     const startPct = (1 - threshold) * 100;
 
+    // Check if element is already in view BEFORE setting initial state
+    const rect = el.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const isInView = rect.top < viewportHeight;
+
+    if (isInView) {
+      // Already in view - just show it with a quick fade in, no scroll trigger needed
+      gsap.set(el, {
+        visibility: "visible",
+        opacity: animateOpacity ? initialOpacity : 1,
+      });
+      gsap.to(el, {
+        opacity: 1,
+        duration: 0.4,
+        delay,
+        ease: "power2.out",
+      });
+      return;
+    }
+
+    // Not in view - use full animation with scroll trigger
     gsap.set(el, {
       [axis]: offset,
       scale,

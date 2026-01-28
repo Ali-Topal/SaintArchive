@@ -120,13 +120,13 @@ export default async function ProductList({ searchParams = {} }: ProductListProp
 
       {/* Hero Product */}
       <AnimatedContent
-        distance={100}
+        distance={20}
         direction="vertical"
         duration={0.8}
-        ease="power3.out"
+        ease="power2.out"
         initialOpacity={0}
         animateOpacity
-        threshold={0.1}
+        threshold={0.8}
       >
         <ProductHero product={heroProduct} />
       </AnimatedContent>
@@ -137,14 +137,14 @@ export default async function ProductList({ searchParams = {} }: ProductListProp
           {gridProducts.map((product, index) => (
             <AnimatedContent
               key={product.id}
-              distance={100}
+              distance={30}
               direction="vertical"
-              duration={0.8}
-              ease="power3.out"
+              duration={1}
+              ease="power2.out"
               initialOpacity={0}
               animateOpacity
-              threshold={0.1}
-              delay={index * 0.1}
+              threshold={0.05}
+              delay={index * 0.03}
             >
               <ProductCard product={product} />
             </AnimatedContent>
