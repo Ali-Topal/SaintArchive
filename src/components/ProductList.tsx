@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import Filters from "@/components/Filters";
-import NewsletterForm from "@/components/NewsletterForm";
+import AnimatedContent from "@/components/AnimatedContent";
 import { getFilteredProducts, type FilterParams, type ProductRecord } from "@/lib/products";
 import { createSupabaseServerClient } from "@/lib/supabaseClient";
 
@@ -119,13 +119,35 @@ export default async function ProductList({ searchParams = {} }: ProductListProp
       <Filters groups={buildFilterGroups(availableBrands)} selected={selectedFilters} />
 
       {/* Hero Product */}
-      <ProductHero product={heroProduct} />
+      <AnimatedContent
+        distance={100}
+        direction="vertical"
+        duration={0.8}
+        ease="power3.out"
+        initialOpacity={0}
+        animateOpacity
+        threshold={0.1}
+      >
+        <ProductHero product={heroProduct} />
+      </AnimatedContent>
 
       {/* Product Grid */}
       {gridProducts.length > 0 && (
         <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {gridProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
+          {gridProducts.map((product, index) => (
+            <AnimatedContent
+              key={product.id}
+              distance={100}
+              direction="vertical"
+              duration={0.8}
+              ease="power3.out"
+              initialOpacity={0}
+              animateOpacity
+              threshold={0.1}
+              delay={index * 0.1}
+            >
+              <ProductCard product={product} />
+            </AnimatedContent>
           ))}
         </section>
       )}
@@ -175,16 +197,6 @@ export default async function ProductList({ searchParams = {} }: ProductListProp
         </nav>
       )}
 
-      {/* Newsletter Section */}
-      <section className="space-y-4 rounded-2xl border border-neutral-800 bg-[#0b0b0b] p-6 text-center">
-        <div className="space-y-2">
-          <p className="text-xs uppercase text-white/60">Stay in the loop</p>
-          <h2 className="text-2xl font-semibold text-white">Get first access to new drops.</h2>
-        </div>
-        <div className="mx-auto max-w-2xl">
-          <NewsletterForm showHeading={false} />
-        </div>
-      </section>
     </div>
   );
 }
@@ -196,9 +208,12 @@ function ProductHero({ product }: { product: ProductRecord }) {
   const isOutOfStock = product.stock_quantity === 0;
 
   return (
-    <article className="grid gap-8 rounded-3xl border border-neutral-800 bg-[#050505] p-6 lg:grid-cols-2 lg:p-8">
+    <article className="group relative grid gap-8 rounded-3xl border-2 border-neutral-800 bg-black/40 backdrop-blur-sm p-6 transition hover:border-white/30 lg:grid-cols-2 lg:p-8">
+      {/* Card link - covers entire card */}
+      <Link href={detailHref} className="absolute inset-0 z-0" aria-label={`View ${product.title}`} />
+      
       {/* Image */}
-      <Link href={detailHref} className="relative overflow-hidden rounded-2xl border border-neutral-800">
+      <div className="pointer-events-none relative z-10 overflow-hidden rounded-2xl border border-neutral-800">
         {coverImage ? (
           <div className="relative aspect-square w-full">
             <Image
@@ -206,7 +221,7 @@ function ProductHero({ product }: { product: ProductRecord }) {
               alt={product.title}
               fill
               sizes="(max-width: 1024px) 100vw, 50vw"
-              className="object-cover transition-transform duration-500 hover:scale-105"
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
               priority
             />
           </div>
@@ -222,10 +237,10 @@ function ProductHero({ product }: { product: ProductRecord }) {
             </span>
           </div>
         )}
-      </Link>
+      </div>
 
       {/* Details */}
-      <div className="flex flex-col justify-center space-y-6">
+      <div className="pointer-events-none relative z-10 flex flex-col justify-center space-y-4 py-2">
         <div className="space-y-3">
           {product.brand && (
             <p className="text-xs uppercase tracking-[0.4em] text-white/50">{product.brand}</p>
@@ -266,13 +281,8 @@ function ProductHero({ product }: { product: ProductRecord }) {
           </div>
         )}
 
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <Link
-            href={detailHref}
-            className="inline-flex flex-1 items-center justify-center rounded-full border border-white/40 px-6 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white transition hover:border-white"
-          >
-            View Details
-          </Link>
+        {/* Buy Now Button - inside details */}
+        <div className="flex flex-col gap-3 pt-2 sm:flex-row">
           {isOutOfStock ? (
             <span className="inline-flex flex-1 items-center justify-center rounded-full border border-white/20 px-6 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white/50">
               Out of Stock
@@ -280,7 +290,7 @@ function ProductHero({ product }: { product: ProductRecord }) {
           ) : (
             <Link
               href={`/checkout?product=${product.id}`}
-              className="inline-flex flex-1 items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-black transition hover:bg-white/90"
+              className="pointer-events-auto relative z-20 inline-flex flex-1 items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-black transition hover:bg-white/90"
             >
               Buy Now
             </Link>
@@ -298,33 +308,35 @@ function ProductCard({ product }: { product: ProductRecord }) {
   const isOutOfStock = product.stock_quantity === 0;
 
   return (
-    <article className="group flex h-full flex-col rounded-2xl border border-neutral-800 bg-[#050505] transition hover:border-white/30">
+    <article className="group flex h-full flex-col rounded-2xl border-2 border-neutral-800 bg-black/40 backdrop-blur-sm transition hover:border-white/30">
       <Link href={detailHref} className="flex flex-1 flex-col">
         {/* Image */}
-        <div className="relative overflow-hidden rounded-t-2xl border-b border-neutral-800">
-          {coverImage ? (
-            <div className="relative aspect-square w-full">
-              <Image
-                src={coverImage}
-                alt={product.title}
-                fill
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                className="object-cover transition-transform duration-500 group-hover:scale-105"
-                loading="lazy"
-              />
-            </div>
-          ) : (
-            <div className="flex aspect-square w-full items-center justify-center bg-black/30 text-white/70">
-              Image coming soon
-            </div>
-          )}
-          {isOutOfStock && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/60">
-              <span className="rounded-full bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-white backdrop-blur-sm">
-                Out of Stock
-              </span>
-            </div>
-          )}
+        <div className="p-4 pb-0">
+          <div className="relative overflow-hidden rounded-xl">
+            {coverImage ? (
+              <div className="relative aspect-square w-full">
+                <Image
+                  src={coverImage}
+                  alt={product.title}
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  loading="lazy"
+                />
+              </div>
+            ) : (
+              <div className="flex aspect-square w-full items-center justify-center bg-black/30 text-white/70">
+                Image coming soon
+              </div>
+            )}
+            {isOutOfStock && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/60">
+                <span className="rounded-full bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-white backdrop-blur-sm">
+                  Out of Stock
+                </span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Details */}

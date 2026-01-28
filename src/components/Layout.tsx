@@ -1,75 +1,35 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Instagram, Music2 } from "lucide-react";
 import CartIcon from "./CartIcon";
+import MenuButton from "./MenuButton";
+import SilkBackground from "./SilkBackground";
+import TopBlur from "./TopBlur";
 
 type LayoutProps = {
   children: ReactNode;
 };
 
-const navItems = [
-  { href: "/", label: "Shop" },
-  { href: "/about", label: "About" },
-];
-
-const socialLinks = [
-  {
-    href: "https://instagram.com/saintarchive88",
-    label: "Instagram",
-    Icon: Instagram,
-  },
-  {
-    href: "https://tiktok.com/@saintarchive88",
-    label: "TikTok",
-    Icon: Music2,
-  },
-];
-
 export default function Layout({ children }: LayoutProps) {
   const year = new Date().getFullYear();
 
   return (
-    <div className="bg-[#0a0a0a] text-[#f5f5f5]">
-      <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-10 px-6 py-10 sm:px-10 lg:px-14">
-        <header className="flex flex-col items-center gap-5 text-center">
-          <div className="flex w-full items-center justify-between">
-            <div className="w-10" /> {/* Spacer for balance */}
-            <Link
-              href="/"
-              className="text-2xl font-semibold uppercase tracking-[0.6em] text-white sm:text-3xl sm:tracking-[0.8em]"
-            >
-              SAINT ARCHIVE
-            </Link>
-            <div className="w-10 flex justify-end">
-              <CartIcon />
-            </div>
+    <div className="relative min-h-screen text-[#f5f5f5]">
+      <SilkBackground speed={3.5} scale={1} color="#2c2a36" noiseIntensity={0.7} rotation={0} />
+      {/* Top blur strip */}
+      <TopBlur height="4.7rem" strength={2} divCount={5} exponential /> {/* 4.9rem is the height of the top blur strip */}
+      <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-10 px-6 pb-10 pt-14 sm:px-10 lg:px-14">
+        <header className="flex items-center justify-between">
+          <div className="w-10">
+            <MenuButton />
           </div>
-          <div className="flex w-full flex-col items-center gap-4">
-            <nav className="flex flex-wrap justify-center gap-5 pb-2 text-base md:pb-3">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="text-white/80 transition hover:text-white"
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-            <div className="flex items-center gap-4">
-              {socialLinks.map(({ href, label, Icon }) => (
-                <a
-                  key={href}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={label}
-                  className="flex items-center gap-4 text-white opacity-80 transition-opacity duration-200 hover:opacity-100"
-                >
-                  <Icon className="h-5 w-5" strokeWidth={1.75} />
-                </a>
-              ))}
-            </div>
+          <Link
+            href="/"
+            className="text-2xl font-semibold uppercase tracking-[0.6em] text-white sm:text-3xl sm:tracking-[0.8em]"
+          >
+            SAINT ARCHIVE
+          </Link>
+          <div className="w-10 flex justify-end">
+            <CartIcon />
           </div>
         </header>
 
