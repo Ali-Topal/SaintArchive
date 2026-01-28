@@ -16,7 +16,7 @@ export default function Layout({ children }: LayoutProps) {
     <div className="relative min-h-screen text-[#f5f5f5]">
       <SilkBackground speed={3.5} scale={1} color="#2c2a36" noiseIntensity={0.7} rotation={0} />
       {/* Top blur strip */}
-      <TopBlur height="4.8rem" mobileHeight="3.3rem" strength={2} divCount={3} exponential />
+      <TopBlur height="4.5rem" mobileHeight="2.9rem" strength={2} divCount={3} exponential />
       <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-10 px-4 pb-10 pt-8 sm:px-10 sm:pt-14 lg:px-14">
         <header className="relative flex items-center justify-between">
           <div className="relative z-50">
@@ -25,6 +25,14 @@ export default function Layout({ children }: LayoutProps) {
           <Link
             href="/"
             className="pl-4 pr-2 text-[1.375rem] font-semibold uppercase tracking-[0.4em] text-white sm:px-4 sm:text-3xl sm:tracking-[0.8em]"
+            style={{
+              textShadow: `
+                0 0 4px rgba(255, 255, 255, 0.6),
+                0 0 20px rgba(255, 255, 255, 0.5),
+                0 0 40px rgba(255, 255, 255, 0.2),
+                0 0 60px rgba(255, 255, 255, 0.1)
+              `,
+            }}
           >
             SAINT ARCHIVE
           </Link>

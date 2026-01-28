@@ -1,9 +1,8 @@
-import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import BackToDropsButton from "@/components/BackToDropsButton";
 import ScrollToTop from "@/components/ScrollToTop";
 import ProductActions from "@/components/ProductActions";
+import ImageGallery from "@/components/ImageGallery";
 import { createSupabaseServerClient } from "@/lib/supabaseClient";
 
 type ProductBySlug = {
@@ -102,54 +101,12 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
       <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
         {/* Image Gallery */}
-        <div className="space-y-4">
-          {displayImages.length > 0 ? (
-            <>
-              {/* Main Image */}
-              <div className="relative aspect-square overflow-hidden rounded-2xl border border-neutral-800 bg-black/20">
-                <Image
-                  src={displayImages[0]}
-                  alt={product.title}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                  priority
-                />
-                {(isOutOfStock || isInactive) && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/60">
-                    <span className="rounded-full bg-white/10 px-6 py-2 text-sm font-semibold uppercase tracking-[0.3em] text-white backdrop-blur-sm">
-                      {isInactive ? "Unavailable" : "Out of Stock"}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Thumbnail Grid */}
-              {displayImages.length > 1 && (
-                <div className="grid grid-cols-4 gap-2">
-                  {displayImages.slice(0, 4).map((img, idx) => (
-                    <div
-                      key={idx}
-                      className="relative aspect-square overflow-hidden rounded-lg border border-neutral-800"
-                    >
-                      <Image
-                        src={img}
-                        alt={`${product.title} view ${idx + 1}`}
-                        fill
-                        className="object-cover"
-                        sizes="100px"
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="flex aspect-square w-full items-center justify-center rounded-2xl border border-neutral-800 bg-black/40 text-white/60">
-              Image coming soon
-            </div>
-          )}
-        </div>
+        <ImageGallery
+          images={displayImages}
+          title={product.title}
+          isOutOfStock={isOutOfStock}
+          isInactive={isInactive}
+        />
 
         {/* Product Info */}
         <div className="space-y-6">
