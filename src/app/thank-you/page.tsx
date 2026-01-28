@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createSupabaseServerClient } from "@/lib/supabaseClient";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -67,7 +67,7 @@ export default async function ThankYouPage({ searchParams }: PageProps) {
     );
   }
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = supabaseAdmin();
   
   const { data: orders, error } = await supabase
     .from("orders")

@@ -124,7 +124,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
           </div>
 
           {/* Price */}
-          <div className="rounded-xl border border-neutral-800 px-5 py-4">
+          <div className="rounded-xl border-2 border-neutral-800 px-5 py-4">
             <p className="text-xs uppercase text-white/60">Price</p>
             <p className="text-3xl font-semibold text-white">
               {priceFormatter.format(product.price_cents / 100)}
@@ -132,7 +132,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
           </div>
 
           {/* Stock Status */}
-          <div className="rounded-xl border border-neutral-800 px-5 py-4">
+          <div className="rounded-xl border-2 border-neutral-800 px-5 py-4">
             <p className="text-xs uppercase text-white/60">Availability</p>
             {isInactive ? (
               <p className="text-lg text-white/50">This product is no longer available</p>
@@ -172,7 +172,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
       )}
 
       {/* Shipping Info */}
-      <section className="rounded-xl border border-neutral-800 px-5 py-4">
+      <section className="rounded-xl border-2 border-neutral-800 px-5 py-4">
         <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-white/60">
           Shipping
         </h3>

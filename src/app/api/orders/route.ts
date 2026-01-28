@@ -2,12 +2,6 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { sendOrderConfirmationEmail } from "@/lib/email";
 
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-
-if (!baseUrl) {
-  throw new Error("Missing NEXT_PUBLIC_BASE_URL environment variable.");
-}
-
 // Shipping prices in pence
 const SHIPPING_PRICES = {
   standard: 0, // Free
@@ -69,6 +63,15 @@ function calculateShipping(
 }
 
 export async function POST(request: Request) {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+  if (!baseUrl) {
+    console.error("[orders] Missing NEXT_PUBLIC_BASE_URL environment variable");
+    return NextResponse.json(
+      { error: "Server configuration error." },
+      { status: 500 }
+    );
+  }
+
   let body: OrderBody;
 
   try {

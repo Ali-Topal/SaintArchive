@@ -20,7 +20,18 @@ type SendOrderConfirmationEmailParams = {
   shippingDetails: ShippingDetails;
 };
 
-const resend = new Resend(process.env.RESEND_API_KEY!);
+// Lazy initialization to avoid throwing at module load when key is missing
+let resend: Resend | null = null;
+
+function getResendClient(): Resend | null {
+  if (!process.env.RESEND_API_KEY) {
+    return null;
+  }
+  if (!resend) {
+    resend = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resend;
+}
 
 const PAYPAL_USERNAME = "CenchSaint";
 
@@ -174,7 +185,8 @@ export async function sendOrderConfirmationEmail({
   shippingMethod,
   shippingDetails,
 }: SendOrderConfirmationEmailParams) {
-  if (!process.env.RESEND_API_KEY) {
+  const client = getResendClient();
+  if (!client) {
     console.warn("[email] RESEND_API_KEY is not configured. Skipping email send.");
     return;
   }
@@ -223,7 +235,7 @@ export async function sendOrderConfirmationEmail({
     .replace(/{{year}}/g, new Date().getFullYear().toString());
 
   try {
-    await resend.emails.send({
+    await client.emails.send({
       from: "Saint Archive <orders@saintarchive.co.uk>",
       to: email,
       subject: `Order Confirmed - ${orderNumber}`,
