@@ -29,10 +29,10 @@ export default function MenuButton() {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="flex h-10 w-10 items-center justify-start text-white/80 transition hover:text-white"
+        className="flex items-center text-white/80 transition hover:text-white"
         aria-label="Open menu"
       >
-        <Menu className="h-6 w-6" strokeWidth={1.5} />
+        <Menu className="h-[1.375rem] w-[1.375rem] sm:h-6 sm:w-6" strokeWidth={1.5} />
       </button>
 
       {/* Overlay */}
