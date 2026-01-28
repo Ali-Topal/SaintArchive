@@ -16,15 +16,15 @@ export default function Layout({ children }: LayoutProps) {
     <div className="relative min-h-screen text-[#f5f5f5]">
       <SilkBackground speed={3.5} scale={1} color="#2c2a36" noiseIntensity={0.7} rotation={0} />
       {/* Top blur strip */}
-      <TopBlur height="4.7rem" strength={2} divCount={5} exponential /> {/* 4.9rem is the height of the top blur strip */}
-      <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-10 px-6 pb-10 pt-14 sm:px-10 lg:px-14">
+      <TopBlur height="4.7rem" mobileHeight="3.3rem" strength={2} divCount={5} exponential />
+      <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-10 px-6 pb-10 pt-8 sm:px-10 sm:pt-14 lg:px-14">
         <header className="flex items-center justify-between">
           <div className="w-10">
             <MenuButton />
           </div>
           <Link
             href="/"
-            className="text-2xl font-semibold uppercase tracking-[0.6em] text-white sm:text-3xl sm:tracking-[0.8em]"
+            className="text-lg font-semibold uppercase tracking-[0.4em] text-white sm:text-3xl sm:tracking-[0.8em]"
           >
             SAINT ARCHIVE
           </Link>

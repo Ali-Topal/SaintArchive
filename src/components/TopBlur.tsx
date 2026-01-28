@@ -4,6 +4,7 @@ import { useMemo } from "react";
 
 type TopBlurProps = {
   height?: string;
+  mobileHeight?: string;
   strength?: number;
   divCount?: number;
   exponential?: boolean;
@@ -14,6 +15,7 @@ const bezierCurve = (p: number) => p * p * (3 - 2 * p);
 
 export default function TopBlur({
   height = "7.5rem",
+  mobileHeight,
   strength = 2,
   divCount = 5,
   exponential = true,
@@ -65,23 +67,36 @@ export default function TopBlur({
     return divs;
   }, [divCount, strength, exponential]);
 
+  const actualMobileHeight = mobileHeight || height;
+
   return (
-    <div
-      className="pointer-events-none fixed inset-x-0 top-0 z-40"
-      style={{
-        height,
-        isolation: "isolate",
-      }}
-    >
+    <>
+      <style>{`
+        .top-blur-container {
+          height: ${actualMobileHeight};
+        }
+        @media (min-width: 640px) {
+          .top-blur-container {
+            height: ${height};
+          }
+        }
+      `}</style>
       <div
+        className="top-blur-container pointer-events-none fixed inset-x-0 top-0 z-40"
         style={{
-          position: "relative",
-          width: "100%",
-          height: "100%",
+          isolation: "isolate",
         }}
       >
-        {blurDivs}
+        <div
+          style={{
+            position: "relative",
+            width: "100%",
+            height: "100%",
+          }}
+        >
+          {blurDivs}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
