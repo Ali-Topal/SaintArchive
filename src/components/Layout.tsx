@@ -24,7 +24,7 @@ export default function Layout({ children }: LayoutProps) {
           </div>
           <Link
             href="/"
-            className="pl-4 pr-2 text-[1.375rem] font-semibold uppercase tracking-[0.4em] text-white sm:px-4 sm:text-3xl sm:tracking-[0.8em]"
+            className="whitespace-nowrap pl-4 pr-2 text-[1.375rem] font-semibold uppercase tracking-[0.2em] text-white sm:px-4 sm:text-3xl sm:tracking-[0.8em]"
             style={{
               textShadow: `
                 0 0 4px rgba(255, 255, 255, 0.6),

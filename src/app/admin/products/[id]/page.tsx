@@ -24,10 +24,13 @@ async function updateProduct(formData: FormData) {
   const sortPriority =
     sortPriorityRaw && sortPriorityRaw.length > 0 ? Number(sortPriorityRaw) : null;
 
+  const category = formData.get("category")?.toString().trim() || null;
+
   const payload = {
     title: formData.get("title")?.toString().trim() ?? "",
     brand: formData.get("brand")?.toString().trim() ?? "",
     color: formData.get("color")?.toString().trim() ?? "",
+    category,
     options: formData
       .getAll("options")
       .map((value) => value?.toString().trim() ?? "")
@@ -166,7 +169,7 @@ export default async function EditProductPage({ params }: PageProps) {
   const { data: product, error } = await supabase
     .from("products")
     .select(
-      "id,title,slug,brand,color,options,description,image_url,image_urls,price_cents,stock_quantity,is_active,sort_priority"
+      "id,title,slug,brand,color,category,options,description,image_url,image_urls,price_cents,stock_quantity,is_active,sort_priority"
     )
     .eq("id", id)
     .maybeSingle();
@@ -268,6 +271,27 @@ export default async function EditProductPage({ params }: PageProps) {
                 placeholder="e.g. Navy / Olive"
                 className="w-full rounded-xl border border-white/15 bg-transparent px-4 py-3 text-foreground focus:border-white focus:outline-none"
               />
+            </label>
+
+            <label className="space-y-2 text-sm">
+              <span className="text-muted uppercase tracking-[0.2em]">Category</span>
+              <select
+                name="category"
+                defaultValue={product.category ?? ""}
+                className="w-full rounded-xl border border-white/15 bg-transparent px-4 py-3 text-foreground focus:border-white focus:outline-none"
+              >
+                <option value="" className="bg-neutral-900">No Category</option>
+                <option value="jackets" className="bg-neutral-900">Jackets</option>
+                <option value="hoodies" className="bg-neutral-900">Hoodies</option>
+                <option value="t-shirts" className="bg-neutral-900">T-Shirts</option>
+                <option value="shirts" className="bg-neutral-900">Shirts</option>
+                <option value="trousers" className="bg-neutral-900">Trousers</option>
+                <option value="shorts" className="bg-neutral-900">Shorts</option>
+                <option value="footwear" className="bg-neutral-900">Footwear</option>
+                <option value="accessories" className="bg-neutral-900">Accessories</option>
+                <option value="bags" className="bg-neutral-900">Bags</option>
+                <option value="hats" className="bg-neutral-900">Hats</option>
+              </select>
             </label>
           </div>
 

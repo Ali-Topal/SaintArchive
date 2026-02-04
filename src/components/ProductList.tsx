@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Filters from "@/components/Filters";
 import AnimatedContent from "@/components/AnimatedContent";
-import { getFilteredProducts, type FilterParams, type ProductRecord } from "@/lib/products";
+import { getFilteredProducts, PRICE_RANGES, CATEGORIES, type FilterParams, type ProductRecord } from "@/lib/products";
 import { createSupabaseServerClient } from "@/lib/supabaseClient";
 
 type SearchParamRecord = Record<string, string | string[] | undefined>;
@@ -27,19 +27,80 @@ const parseParamValues = (value?: string | string[]): string[] => {
     .filter((item): item is string => Boolean(item));
 };
 
+const parseBoolParam = (value?: string | string[]): boolean => {
+  if (!value) return false;
+  const val = Array.isArray(value) ? value[0] : value;
+  return val === "true" || val === "1";
+};
+
 const buildFilterInput = (params: SearchParamRecord): FilterParams => ({
   brand: parseParamValues(params.brand),
   category: parseParamValues(params.category),
+  priceRange: parseParamValues(params.price),
+  clothingSize: parseParamValues(params.clothingSize),
+  shoeSize: parseParamValues(params.shoeSize),
+  inStockOnly: parseBoolParam(params.inStock),
 });
 
-const buildFilterGroups = (brands: string[]) =>
-  [
-    {
+type FilterGroup = {
+  key: string;
+  label: string;
+  options: { value: string; label: string }[];
+};
+
+const buildFilterGroups = (
+  brands: string[],
+  categories: string[],
+  clothingSizes: string[],
+  shoeSizes: string[]
+): FilterGroup[] => {
+  const groups: FilterGroup[] = [];
+
+  // Category filter
+  if (categories.length > 0) {
+    const categoryOptions = categories.map((cat) => {
+      const categoryDef = CATEGORIES.find((c) => c.key === cat);
+      return { value: cat, label: categoryDef?.label ?? cat };
+    });
+    groups.push({ key: "category", label: "Category", options: categoryOptions });
+  }
+
+  // Brand filter
+  if (brands.length > 0) {
+    groups.push({
       key: "brand",
-      label: "Brands",
+      label: "Brand",
       options: brands.map((brand) => ({ value: brand, label: brand })),
-    },
-  ].filter((group) => group.options.length > 0);
+    });
+  }
+
+  // Price range filter
+  groups.push({
+    key: "price",
+    label: "Price",
+    options: PRICE_RANGES.map((range) => ({ value: range.key, label: range.label })),
+  });
+
+  // Clothing size filter
+  if (clothingSizes.length > 0) {
+    groups.push({
+      key: "clothingSize",
+      label: "Clothing Size",
+      options: clothingSizes.map((size) => ({ value: size, label: size })),
+    });
+  }
+
+  // Shoe size filter
+  if (shoeSizes.length > 0) {
+    groups.push({
+      key: "shoeSize",
+      label: "Shoe Size",
+      options: shoeSizes.map((size) => ({ value: size, label: size })),
+    });
+  }
+
+  return groups.filter((group) => group.options.length > 0);
+};
 
 type ProductListProps = {
   searchParams?: SearchParamRecord;
@@ -52,11 +113,14 @@ export default async function ProductList({ searchParams = {} }: ProductListProp
   const pageParam = Array.isArray(rawPageParam) ? rawPageParam[0] : rawPageParam;
   const requestedPage = pageParam ? Number(pageParam) : 1;
   const pageNumber = Number.isFinite(requestedPage) && requestedPage > 0 ? Math.floor(requestedPage) : 1;
-  const pageSize = 12;
+  const pageSize = 13; // 1 hero + 12 grid items (4 complete rows of 3)
 
   const {
     products,
     availableBrands,
+    availableCategories,
+    availableClothingSizes,
+    availableShoeSizes,
     appliedFilters,
     totalCount,
     totalPages,
@@ -66,7 +130,13 @@ export default async function ProductList({ searchParams = {} }: ProductListProp
 
   const selectedFilters = {
     brand: appliedFilters.brand ?? [],
+    category: appliedFilters.category ?? [],
+    price: appliedFilters.priceRange ?? [],
+    clothingSize: appliedFilters.clothingSize ?? [],
+    shoeSize: appliedFilters.shoeSize ?? [],
   };
+
+  const inStockOnly = appliedFilters.inStockOnly ?? false;
 
   const buildPageHref = (targetPage: number) => {
     const params = new URLSearchParams();
@@ -98,12 +168,14 @@ export default async function ProductList({ searchParams = {} }: ProductListProp
   if (!products.length) {
     return (
       <div className="space-y-6 lg:space-y-16">
-        <Filters groups={buildFilterGroups(availableBrands)} selected={selectedFilters} />
+        <Filters
+          groups={buildFilterGroups(availableBrands, availableCategories, availableClothingSizes, availableShoeSizes)}
+          selected={selectedFilters}
+          inStockOnly={inStockOnly}
+        />
         <section className="flex min-h-[40vh] items-center justify-center rounded-[32px] border border-white/10 bg-white/5/20 px-8 py-16 text-center">
           <p className="text-base uppercase tracking-[0.4em] text-muted">
-            {appliedFilters.brand?.length
-              ? `No products found for ${appliedFilters.brand.join(", ")}`
-              : "No products available right now. Check back soon."}
+            No products match your filters. Try adjusting your selection.
           </p>
         </section>
       </div>
@@ -116,7 +188,11 @@ export default async function ProductList({ searchParams = {} }: ProductListProp
 
   return (
     <div className="space-y-6 lg:space-y-16">
-      <Filters groups={buildFilterGroups(availableBrands)} selected={selectedFilters} />
+      <Filters
+        groups={buildFilterGroups(availableBrands, availableCategories, availableClothingSizes, availableShoeSizes)}
+        selected={selectedFilters}
+        inStockOnly={inStockOnly}
+      />
 
       {/* Hero Product - Hidden on mobile */}
       <div className="hidden md:block">
@@ -150,22 +226,26 @@ export default async function ProductList({ searchParams = {} }: ProductListProp
           </AnimatedContent>
         </div>
         
-        {/* Remaining products */}
-        {gridProducts.map((product, index) => (
-          <AnimatedContent
-            key={product.id}
-            distance={30}
-            direction="vertical"
-            duration={1}
-            ease="power2.out"
-            initialOpacity={0}
-            animateOpacity
-            threshold={0.05}
-            delay={index * 0.03}
-          >
-            <ProductCard product={product} />
-          </AnimatedContent>
-        ))}
+        {/* Remaining products - hide last item on mobile to keep even grid */}
+        {gridProducts.map((product, index) => {
+          const isLastItem = index === gridProducts.length - 1;
+          return (
+            <AnimatedContent
+              key={product.id}
+              distance={30}
+              direction="vertical"
+              duration={1}
+              ease="power2.out"
+              initialOpacity={0}
+              animateOpacity
+              threshold={0.05}
+              delay={index * 0.03}
+              className={isLastItem ? "hidden md:block" : ""}
+            >
+              <ProductCard product={product} />
+            </AnimatedContent>
+          );
+        })}
       </section>
 
       {/* Pagination */}
