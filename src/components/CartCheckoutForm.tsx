@@ -10,15 +10,10 @@ const priceFormatter = new Intl.NumberFormat("en-GB", {
   currency: "GBP",
 });
 
-// Shipping prices in pence
-const SHIPPING_PRICES = {
-  standard: 0,
-  next_day: 599,
-} as const;
+// Free next day delivery on all orders
+const SHIPPING_COST = 0;
 
-const FREE_SHIPPING_THRESHOLD = 5000; // £50
-
-type ShippingMethod = "standard" | "next_day";
+type ShippingMethod = "next_day";
 
 export default function CartCheckoutForm() {
   const router = useRouter();
@@ -37,7 +32,15 @@ export default function CartCheckoutForm() {
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
   const [postcode, setPostcode] = useState("");
-  const [shippingMethod, setShippingMethod] = useState<ShippingMethod>("standard");
+  const [shippingMethod] = useState<ShippingMethod>("next_day");
+
+  // Discount code
+  const [discountCode, setDiscountCode] = useState("");
+  const [discountInput, setDiscountInput] = useState("");
+  const [discountAmountCents, setDiscountAmountCents] = useState(0);
+  const [discountMessage, setDiscountMessage] = useState<string | null>(null);
+  const [isValidatingCode, setIsValidatingCode] = useState(false);
+  const [discountError, setDiscountError] = useState<string | null>(null);
 
   useEffect(() => {
     setIsHydrated(true);
@@ -65,11 +68,52 @@ export default function CartCheckoutForm() {
     );
   }
 
-  const shippingCost =
-    shippingMethod === "standard" && subtotalCents >= FREE_SHIPPING_THRESHOLD
-      ? 0
-      : SHIPPING_PRICES[shippingMethod];
-  const totalCents = subtotalCents + shippingCost;
+  const totalCents = subtotalCents - discountAmountCents + SHIPPING_COST;
+
+  // Validate discount code
+  const handleApplyDiscount = async () => {
+    if (!discountInput.trim()) return;
+    
+    setIsValidatingCode(true);
+    setDiscountError(null);
+    setDiscountMessage(null);
+
+    try {
+      const response = await fetch("/api/discount-codes/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: discountInput.trim(),
+          subtotalCents,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setDiscountError(data.error || "Invalid code");
+        setDiscountCode("");
+        setDiscountAmountCents(0);
+      } else {
+        setDiscountCode(data.code);
+        setDiscountAmountCents(data.discountAmountCents);
+        setDiscountMessage(data.message);
+        setDiscountError(null);
+      }
+    } catch {
+      setDiscountError("Failed to validate code");
+    } finally {
+      setIsValidatingCode(false);
+    }
+  };
+
+  const handleRemoveDiscount = () => {
+    setDiscountCode("");
+    setDiscountInput("");
+    setDiscountAmountCents(0);
+    setDiscountMessage(null);
+    setDiscountError(null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,8 +121,8 @@ export default function CartCheckoutForm() {
     setIsSubmitting(true);
 
     try {
-      // Create orders for each cart item
-      const orderPromises = items.map((item) =>
+      // Create orders for each cart item (only first item gets discount)
+      const orderPromises = items.map((item, index) =>
         fetch("/api/orders", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -93,6 +137,7 @@ export default function CartCheckoutForm() {
             shippingCity: city,
             shippingPostcode: postcode,
             shippingMethod,
+            discountCode: index === 0 ? discountCode || undefined : undefined,
           }),
         }).then(async (res) => {
           const data = await res.json();
@@ -216,53 +261,20 @@ export default function CartCheckoutForm() {
             </div>
           </section>
 
-          {/* Shipping Method */}
+          {/* Shipping */}
           <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
-            <h2 className="mb-4 text-lg font-semibold text-white">Shipping Method</h2>
-            <div className="space-y-3">
-              <label className={`flex cursor-pointer items-center justify-between rounded-xl border p-4 transition ${
-                shippingMethod === "standard" ? "border-white bg-white/10" : "border-white/15 hover:border-white/30"
-              }`}>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="radio"
-                    name="shipping"
-                    value="standard"
-                    checked={shippingMethod === "standard"}
-                    onChange={() => setShippingMethod("standard")}
-                    className="accent-white"
-                  />
-                  <div>
-                    <p className="font-medium text-white">Standard Delivery</p>
-                    <p className="text-sm text-white/60">3-5 business days</p>
-                  </div>
+            <h2 className="mb-4 text-lg font-semibold text-white">Shipping</h2>
+            <div className="flex items-center justify-between rounded-xl border border-white bg-white/10 p-4">
+              <div className="flex items-center gap-3">
+                <div className="h-4 w-4 rounded-full border-2 border-white flex items-center justify-center">
+                  <div className="h-2 w-2 rounded-full bg-white" />
                 </div>
-                <span className="font-semibold text-white">
-                  {subtotalCents >= FREE_SHIPPING_THRESHOLD ? "Free" : "Free"}
-                </span>
-              </label>
-
-              <label className={`flex cursor-pointer items-center justify-between rounded-xl border p-4 transition ${
-                shippingMethod === "next_day" ? "border-white bg-white/10" : "border-white/15 hover:border-white/30"
-              }`}>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="radio"
-                    name="shipping"
-                    value="next_day"
-                    checked={shippingMethod === "next_day"}
-                    onChange={() => setShippingMethod("next_day")}
-                    className="accent-white"
-                  />
-                  <div>
-                    <p className="font-medium text-white">Next Day Delivery</p>
-                    <p className="text-sm text-white/60">Order by 2pm for next day</p>
-                  </div>
+                <div>
+                  <p className="font-medium text-white">Free Next Day Delivery</p>
+                  <p className="text-sm text-white/60">Order by 2pm for next day</p>
                 </div>
-                <span className="font-semibold text-white">
-                  {priceFormatter.format(SHIPPING_PRICES.next_day / 100)}
-                </span>
-              </label>
+              </div>
+              <span className="font-semibold text-white">FREE</span>
             </div>
           </section>
         </div>
@@ -297,17 +309,64 @@ export default function CartCheckoutForm() {
               ))}
             </div>
 
+            {/* Discount Code */}
+            <div className="space-y-2 border-b border-white/10 pb-4">
+              <span className="text-xs uppercase tracking-[0.2em] text-white/60">Discount Code</span>
+              {discountCode ? (
+                <div className="flex items-center justify-between rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3">
+                  <div>
+                    <p className="text-sm font-semibold text-green-400">{discountCode}</p>
+                    <p className="text-xs text-green-400/80">{discountMessage}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRemoveDiscount}
+                    disabled={isSubmitting}
+                    className="text-xs text-white/60 hover:text-white"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={discountInput}
+                    onChange={(e) => setDiscountInput(e.target.value.toUpperCase())}
+                    disabled={isSubmitting || isValidatingCode}
+                    placeholder="Enter code"
+                    className="flex-1 rounded-lg border border-white/20 bg-white/5 px-4 py-2 text-sm text-white placeholder-white/40 focus:border-white focus:outline-none disabled:opacity-50"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleApplyDiscount}
+                    disabled={isSubmitting || isValidatingCode || !discountInput.trim()}
+                    className="rounded-lg border border-white/30 px-4 py-2 text-sm text-white transition hover:border-white disabled:opacity-50"
+                  >
+                    {isValidatingCode ? "..." : "Apply"}
+                  </button>
+                </div>
+              )}
+              {discountError && (
+                <p className="text-xs text-red-400">{discountError}</p>
+              )}
+            </div>
+
             {/* Totals */}
             <div className="space-y-2 pt-4 text-sm">
               <div className="flex justify-between text-white/70">
                 <span>Subtotal</span>
                 <span>{priceFormatter.format(subtotalCents / 100)}</span>
               </div>
+              {discountAmountCents > 0 && (
+                <div className="flex justify-between text-green-400">
+                  <span>Discount</span>
+                  <span>-{priceFormatter.format(discountAmountCents / 100)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-white/70">
                 <span>Shipping</span>
-                <span>
-                  {shippingCost === 0 ? "Free" : priceFormatter.format(shippingCost / 100)}
-                </span>
+                <span>Free</span>
               </div>
               <div className="flex justify-between border-t border-white/10 pt-2 text-lg font-semibold text-white">
                 <span>Total</span>

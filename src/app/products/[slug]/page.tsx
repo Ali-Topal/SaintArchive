@@ -177,8 +177,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
           Shipping
         </h3>
         <div className="mt-3 space-y-2 text-sm text-white/80">
-          <p>• Free standard delivery (3-5 business days)</p>
-          <p>• Next day delivery available at checkout</p>
+          <p>• Free next day delivery on all orders</p>
           <p>• UK shipping only</p>
         </div>
       </section>

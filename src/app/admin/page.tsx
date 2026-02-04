@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import CopyButton from "@/components/CopyButton";
+import DraggableProductList from "@/components/DraggableProductList";
 
 const priceFormatter = new Intl.NumberFormat("en-GB", {
   style: "currency",
@@ -20,11 +20,8 @@ const formatDate = (value: string | null) => {
   });
 };
 
-async function toggleProductActive(formData: FormData) {
+async function toggleProductActiveAction(productId: string, currentActive: boolean) {
   "use server";
-
-  const productId = formData.get("productId")?.toString();
-  const currentActive = formData.get("currentActive")?.toString() === "true";
 
   if (!productId) {
     throw new Error("Missing product ID");
@@ -186,85 +183,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps = {}) {
               No products yet.
             </p>
           ) : (
-            <div className="space-y-3">
-              {productItems.map((product) => {
-                const thumbnail = product.image_urls?.[0] ?? product.image_url ?? null;
-                
-                return (
-                  <div
-                    key={product.id}
-                    className={`rounded-2xl border p-5 ${
-                      product.is_active ? "border-white/10 bg-white/5" : "border-red-500/30 bg-red-500/5"
-                    }`}
-                  >
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="flex items-center gap-4">
-                        {thumbnail ? (
-                          <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl border border-white/10">
-                            <img
-                              src={thumbnail}
-                              alt={product.title}
-                              className="h-full w-full object-cover"
-                            />
-                          </div>
-                        ) : (
-                          <div className="h-16 w-16 flex-shrink-0 rounded-xl border border-white/10 bg-white/5" />
-                        )}
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <p className="text-lg font-semibold text-white">{product.title}</p>
-                            {!product.is_active && (
-                              <span className="rounded-full bg-red-500/20 px-2 py-0.5 text-xs text-red-400">
-                                Inactive
-                              </span>
-                            )}
-                          </div>
-                          {product.brand && (
-                            <p className="text-xs text-white/50">{product.brand}</p>
-                          )}
-                          <p className="text-sm text-white/70">
-                            {priceFormatter.format(product.price_cents / 100)} · Stock: {product.stock_quantity}
-                          </p>
-                          <div className="flex items-center gap-2 text-xs text-white/40">
-                            <span>ID: {product.id.slice(0, 8)}...</span>
-                            <CopyButton text={product.id} />
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Link
-                          href={`/products/${product.slug ?? product.id}`}
-                          className="rounded-full border border-white/20 px-4 py-2 text-xs uppercase tracking-[0.2em] text-white/70 transition hover:border-white/40 hover:text-white"
-                        >
-                          View
-                        </Link>
-                        <Link
-                          href={`/admin/products/${product.id}`}
-                          className="rounded-full border border-white/20 px-4 py-2 text-xs uppercase tracking-[0.2em] text-white/70 transition hover:border-white/40 hover:text-white"
-                        >
-                          Edit
-                        </Link>
-                        <form action={toggleProductActive}>
-                          <input type="hidden" name="productId" value={product.id} />
-                          <input type="hidden" name="currentActive" value={String(product.is_active)} />
-                          <button
-                            type="submit"
-                            className={`rounded-full border px-4 py-2 text-xs uppercase tracking-[0.2em] transition ${
-                              product.is_active
-                                ? "border-red-500/30 text-red-400 hover:border-red-500/50"
-                                : "border-green-500/30 text-green-400 hover:border-green-500/50"
-                            }`}
-                          >
-                            {product.is_active ? "Deactivate" : "Activate"}
-                          </button>
-                        </form>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <DraggableProductList
+              initialProducts={productItems}
+              onToggleActive={toggleProductActiveAction}
+            />
           )}
         </div>
       )}

@@ -16,19 +16,13 @@ export default function ShippingPage() {
         </section>
 
         <section className="space-y-2">
-          <h2 className="text-base font-semibold text-white">Shipping Options</h2>
-          <div className="space-y-3">
-            <div className="rounded-lg border border-white/10 p-4">
-              <p className="font-semibold text-white">Standard Delivery — FREE</p>
-              <p className="text-white/60">3-5 business days</p>
-            </div>
-            <div className="rounded-lg border border-white/10 p-4">
-              <p className="font-semibold text-white">Next Day Delivery — £5.99</p>
-              <p className="text-white/60">Order before 2pm for next working day delivery</p>
-            </div>
+          <h2 className="text-base font-semibold text-white">Shipping</h2>
+          <div className="rounded-lg border border-white/10 p-4">
+            <p className="font-semibold text-white">Free Next Day Delivery</p>
+            <p className="text-white/60">On all UK orders</p>
           </div>
           <p className="mt-2">
-            Free standard shipping on all orders over £50.
+            All orders include free next day delivery. Order before 2pm for next working day delivery.
           </p>
         </section>
 

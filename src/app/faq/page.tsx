@@ -23,7 +23,7 @@ export default function FaqPage() {
     {
       question: "How long does shipping take?",
       answer:
-        "Standard delivery takes 3-5 business days within the UK. Next day delivery is available at checkout for an additional fee.",
+        "We offer free next day delivery on all UK orders. Your order will arrive the next business day after payment is confirmed.",
     },
     {
       question: "Do you ship internationally?",

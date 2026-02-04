@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import CopyButton from "@/components/CopyButton";
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -163,9 +164,12 @@ export default async function ThankYouPage({ searchParams }: PageProps) {
         
         {!isMultipleOrders && (
           <div className="grid gap-4 sm:grid-cols-2 pt-2">
-            <div className="space-y-1">
+            <div className="space-y-2">
               <p className="text-xs uppercase tracking-[0.3em] text-white/60">Order number</p>
-              <p className="text-xl font-semibold text-white font-mono">{firstOrder.order_number}</p>
+              <div className="flex items-center gap-3">
+                <p className="text-xl font-semibold text-white font-mono">{firstOrder.order_number}</p>
+                <CopyButton text={firstOrder.order_number} />
+              </div>
             </div>
             <div className="space-y-1">
               <p className="text-xs uppercase tracking-[0.3em] text-white/60">Total</p>
@@ -198,35 +202,42 @@ export default async function ThankYouPage({ searchParams }: PageProps) {
           <h3 className="text-xl font-semibold text-white">Complete your payment via PayPal</h3>
           <div className="space-y-3 text-sm text-white/80">
             <p>To complete your order, please send payment via PayPal:</p>
-            <ol className="list-decimal list-inside space-y-2">
+            <ol className="list-decimal list-inside space-y-3">
               <li>
-                Go to{" "}
+                Open{" "}
                 <a
-                  href={`https://paypal.me/${PAYPAL_USERNAME}/${(totalAmountCents / 100).toFixed(2)}GBP`}
+                  href="https://www.paypal.com/myaccount/transfer/send"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-white underline hover:text-amber-400"
                 >
-                  PayPal.me/{PAYPAL_USERNAME}
+                  PayPal
                 </a>
+                {" "}and select <span className="text-white">Send</span>
               </li>
-              <li>Send <span className="font-semibold text-white">{totalAmount}</span></li>
               <li>
-                Add your order number{isMultipleOrders ? "s" : ""} as the reference:{" "}
+                Send to:{" "}
+                <span className="font-semibold text-white">@{PAYPAL_USERNAME}</span>
+              </li>
+              <li>
+                Amount:{" "}
+                <span className="font-semibold text-white">{totalAmount}</span>
+              </li>
+              <li>Select <span className="font-semibold text-white">Friends & Family</span> as payment type</li>
+              <li>
+                Add your order number{isMultipleOrders ? "s" : ""} as the note:{" "}
                 <span className="font-mono font-semibold text-white">
                   {orderNumbers.join(", ")}
                 </span>
+                <CopyButton text={orderNumbers.join(", ")} className="ml-2" small />
               </li>
             </ol>
           </div>
-          <a
-            href={`https://paypal.me/${PAYPAL_USERNAME}/${(totalAmountCents / 100).toFixed(2)}GBP`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-4 inline-flex w-full items-center justify-center rounded-full bg-[#0070ba] px-6 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-[#005ea6]"
-          >
-            Pay with PayPal
-          </a>
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 text-xs text-amber-200/80 space-y-2">
+            <p className="font-semibold text-amber-300">Important:</p>
+            <p>Please send as <span className="font-semibold">Friends & Family</span> and include your order number in the note so we can match your payment.</p>
+            <p>Payments not sent via Friends & Family will be refunded. If there's any issue with your order, we handle all returns and refunds directly through our system.</p>
+          </div>
           <p className="text-xs text-white/50 text-center">
             Your order will be processed once payment is confirmed.
           </p>

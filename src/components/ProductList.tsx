@@ -110,7 +110,7 @@ export default async function ProductList({ searchParams = {} }: ProductListProp
     );
   }
 
-  // Feature the first product as hero
+  // Feature the first product as hero (desktop/tablet only)
   const heroProduct = products[0];
   const gridProducts = products.slice(1);
 
@@ -118,39 +118,55 @@ export default async function ProductList({ searchParams = {} }: ProductListProp
     <div className="space-y-6 lg:space-y-16">
       <Filters groups={buildFilterGroups(availableBrands)} selected={selectedFilters} />
 
-      {/* Hero Product */}
-      <AnimatedContent
-        distance={20}
-        direction="vertical"
-        duration={0.8}
-        ease="power2.out"
-        initialOpacity={0}
-        animateOpacity
-        threshold={0.8}
-      >
-        <ProductHero product={heroProduct} />
-      </AnimatedContent>
+      {/* Hero Product - Hidden on mobile */}
+      <div className="hidden md:block">
+        <AnimatedContent
+          distance={20}
+          direction="vertical"
+          duration={0.8}
+          ease="power2.out"
+          initialOpacity={0}
+          animateOpacity
+          threshold={0.8}
+        >
+          <ProductHero product={heroProduct} />
+        </AnimatedContent>
+      </div>
 
-      {/* Product Grid */}
-      {gridProducts.length > 0 && (
-        <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {gridProducts.map((product, index) => (
-            <AnimatedContent
-              key={product.id}
-              distance={30}
-              direction="vertical"
-              duration={1}
-              ease="power2.out"
-              initialOpacity={0}
-              animateOpacity
-              threshold={0.05}
-              delay={index * 0.03}
-            >
-              <ProductCard product={product} />
-            </AnimatedContent>
-          ))}
-        </section>
-      )}
+      {/* Product Grid - On mobile shows ALL products, on desktop shows all except hero */}
+      <section className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3">
+        {/* First product as card on mobile only */}
+        <div className="md:hidden">
+          <AnimatedContent
+            distance={30}
+            direction="vertical"
+            duration={1}
+            ease="power2.out"
+            initialOpacity={0}
+            animateOpacity
+            threshold={0.05}
+          >
+            <ProductCard product={heroProduct} />
+          </AnimatedContent>
+        </div>
+        
+        {/* Remaining products */}
+        {gridProducts.map((product, index) => (
+          <AnimatedContent
+            key={product.id}
+            distance={30}
+            direction="vertical"
+            duration={1}
+            ease="power2.out"
+            initialOpacity={0}
+            animateOpacity
+            threshold={0.05}
+            delay={index * 0.03}
+          >
+            <ProductCard product={product} />
+          </AnimatedContent>
+        ))}
+      </section>
 
       {/* Pagination */}
       {totalPages > 1 && (
@@ -308,18 +324,18 @@ function ProductCard({ product }: { product: ProductRecord }) {
   const isOutOfStock = product.stock_quantity === 0;
 
   return (
-    <article className="group flex h-full flex-col rounded-2xl border-2 border-neutral-800 bg-black/40 backdrop-blur-sm transition hover:border-white/30">
+    <article className="group flex h-full flex-col rounded-xl border border-neutral-800 bg-black/40 backdrop-blur-sm transition hover:border-white/30 sm:rounded-2xl sm:border-2">
       <Link href={detailHref} className="flex flex-1 flex-col">
         {/* Image */}
-        <div className="p-4 pb-0">
-          <div className="relative overflow-hidden rounded-xl">
+        <div className="p-2 pb-0 sm:p-4 sm:pb-0">
+          <div className="relative overflow-hidden rounded-lg sm:rounded-xl">
             {coverImage ? (
               <div className="relative aspect-square w-full">
                 <Image
                   src={coverImage}
                   alt={product.title}
                   fill
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  sizes="(max-width: 768px) 50vw, 33vw"
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                   loading="lazy"
                 />
@@ -340,32 +356,32 @@ function ProductCard({ product }: { product: ProductRecord }) {
         </div>
 
         {/* Details */}
-        <div className="flex flex-1 flex-col p-5">
-          <div className="flex-1 space-y-2">
+        <div className="flex flex-1 flex-col p-3 sm:p-5">
+          <div className="flex-1 space-y-1 sm:space-y-2">
             {product.brand && (
-              <p className="text-xs uppercase tracking-[0.3em] text-white/50">{product.brand}</p>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-white/50 sm:text-xs sm:tracking-[0.3em]">{product.brand}</p>
             )}
-            <h3 className="text-lg font-semibold text-white">{product.title}</h3>
+            <h3 className="text-sm font-semibold text-white sm:text-lg">{product.title}</h3>
             {product.color && (
-              <p className="text-xs uppercase tracking-[0.2em] text-white/50">{product.color}</p>
+              <p className="text-[10px] uppercase tracking-[0.15em] text-white/50 sm:text-xs sm:tracking-[0.2em]">{product.color}</p>
             )}
           </div>
-          <p className="mt-4 text-xl font-semibold text-white">
+          <p className="mt-3 text-base font-semibold text-white sm:mt-4 sm:text-xl">
             {priceFormatter.format(product.price_cents / 100)}
           </p>
         </div>
       </Link>
 
       {/* Actions */}
-      <div className="p-5 pt-0">
+      <div className="p-3 pt-0 sm:p-5 sm:pt-0">
         {isOutOfStock ? (
-          <span className="inline-flex w-full items-center justify-center rounded-full border border-white/20 px-6 py-2.5 text-xs font-semibold uppercase tracking-[0.2em] text-white/50">
+          <span className="inline-flex w-full items-center justify-center rounded-full border border-white/20 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-white/50 sm:px-6 sm:py-2.5 sm:text-xs sm:tracking-[0.2em]">
             Out of Stock
           </span>
         ) : (
           <Link
             href={`/checkout?product=${product.id}`}
-            className="inline-flex w-full items-center justify-center rounded-full bg-white px-6 py-2.5 text-xs font-semibold uppercase tracking-[0.2em] text-black transition hover:bg-white/90"
+            className="inline-flex w-full items-center justify-center rounded-full bg-white px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-black transition hover:bg-white/90 sm:px-6 sm:py-2.5 sm:text-xs sm:tracking-[0.2em]"
           >
             Buy Now
           </Link>

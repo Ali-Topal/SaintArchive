@@ -15,13 +15,8 @@ type CheckoutFormProps = {
   preselectedQuantity?: number;
 };
 
-// Shipping prices in pence
-const SHIPPING_OPTIONS = {
-  standard: { label: "Free Standard Delivery (3-5 days)", price: 0 },
-  next_day: { label: "Next Day Delivery", price: 599 },
-} as const;
-
-const FREE_SHIPPING_THRESHOLD = 5000; // £50
+// Free next day delivery on all orders
+const SHIPPING_COST = 0;
 
 const currencyFormatter = new Intl.NumberFormat("en-GB", {
   style: "currency",
@@ -48,7 +43,15 @@ export default function CheckoutForm({
   const [shippingAddress, setShippingAddress] = useState("");
   const [shippingCity, setShippingCity] = useState("");
   const [shippingPostcode, setShippingPostcode] = useState("");
-  const [shippingMethod, setShippingMethod] = useState<"standard" | "next_day">("standard");
+  const [shippingMethod] = useState<"standard" | "next_day">("next_day");
+
+  // Discount code state
+  const [discountCode, setDiscountCode] = useState("");
+  const [discountInput, setDiscountInput] = useState("");
+  const [discountAmountCents, setDiscountAmountCents] = useState(0);
+  const [discountMessage, setDiscountMessage] = useState<string | null>(null);
+  const [isValidatingCode, setIsValidatingCode] = useState(false);
+  const [discountError, setDiscountError] = useState<string | null>(null);
 
   // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -56,15 +59,52 @@ export default function CheckoutForm({
 
   // Calculate totals
   const subtotal = useMemo(() => productPriceCents * quantity, [productPriceCents, quantity]);
-  const shippingCost = useMemo(() => {
-    if (shippingMethod === "standard" && subtotal >= FREE_SHIPPING_THRESHOLD) {
-      return 0;
-    }
-    return SHIPPING_OPTIONS[shippingMethod].price;
-  }, [shippingMethod, subtotal]);
-  const total = subtotal + shippingCost;
+  const total = subtotal - discountAmountCents + SHIPPING_COST;
 
-  const qualifiesForFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
+  // Validate discount code
+  const handleApplyDiscount = async () => {
+    if (!discountInput.trim()) return;
+    
+    setIsValidatingCode(true);
+    setDiscountError(null);
+    setDiscountMessage(null);
+
+    try {
+      const response = await fetch("/api/discount-codes/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: discountInput.trim(),
+          subtotalCents: subtotal,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setDiscountError(data.error || "Invalid code");
+        setDiscountCode("");
+        setDiscountAmountCents(0);
+      } else {
+        setDiscountCode(data.code);
+        setDiscountAmountCents(data.discountAmountCents);
+        setDiscountMessage(data.message);
+        setDiscountError(null);
+      }
+    } catch {
+      setDiscountError("Failed to validate code");
+    } finally {
+      setIsValidatingCode(false);
+    }
+  };
+
+  const handleRemoveDiscount = () => {
+    setDiscountCode("");
+    setDiscountInput("");
+    setDiscountAmountCents(0);
+    setDiscountMessage(null);
+    setDiscountError(null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,6 +126,7 @@ export default function CheckoutForm({
           shippingCity,
           shippingPostcode,
           shippingMethod,
+          discountCode: discountCode || undefined,
         }),
       });
 
@@ -211,64 +252,19 @@ export default function CheckoutForm({
 
         {/* Shipping Method */}
         <section className="space-y-4">
-          <h2 className="text-lg font-semibold text-white">Shipping Method</h2>
-          <div className="space-y-3">
-            <label
-              className={`flex cursor-pointer items-center justify-between rounded-lg border p-4 transition ${
-                shippingMethod === "standard"
-                  ? "border-white bg-white/10"
-                  : "border-white/20 hover:border-white/40"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <input
-                  type="radio"
-                  name="shipping"
-                  value="standard"
-                  checked={shippingMethod === "standard"}
-                  onChange={() => setShippingMethod("standard")}
-                  disabled={isSubmitting}
-                  className="h-4 w-4 accent-white"
-                />
-                <span className="text-white">
-                  {SHIPPING_OPTIONS.standard.label}
-                </span>
+          <h2 className="text-lg font-semibold text-white">Shipping</h2>
+          <div className="flex items-center justify-between rounded-lg border border-white bg-white/10 p-4">
+            <div className="flex items-center gap-3">
+              <div className="h-4 w-4 rounded-full border-2 border-white flex items-center justify-center">
+                <div className="h-2 w-2 rounded-full bg-white" />
               </div>
-              <span className="font-semibold text-white">
-                {qualifiesForFreeShipping || SHIPPING_OPTIONS.standard.price === 0
-                  ? "FREE"
-                  : currencyFormatter.format(SHIPPING_OPTIONS.standard.price / 100)}
-              </span>
-            </label>
-            <label
-              className={`flex cursor-pointer items-center justify-between rounded-lg border p-4 transition ${
-                shippingMethod === "next_day"
-                  ? "border-white bg-white/10"
-                  : "border-white/20 hover:border-white/40"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <input
-                  type="radio"
-                  name="shipping"
-                  value="next_day"
-                  checked={shippingMethod === "next_day"}
-                  onChange={() => setShippingMethod("next_day")}
-                  disabled={isSubmitting}
-                  className="h-4 w-4 accent-white"
-                />
-                <span className="text-white">{SHIPPING_OPTIONS.next_day.label}</span>
-              </div>
-              <span className="font-semibold text-white">
-                {currencyFormatter.format(SHIPPING_OPTIONS.next_day.price / 100)}
-              </span>
-            </label>
+              <span className="text-white">Free Next Day Delivery</span>
+            </div>
+            <span className="font-semibold text-white">FREE</span>
           </div>
-          {!qualifiesForFreeShipping && (
-            <p className="text-xs text-white/50">
-              Free standard shipping on orders over {currencyFormatter.format(FREE_SHIPPING_THRESHOLD / 100)}
-            </p>
-          )}
+          <p className="text-xs text-white/50">
+            Order before 2pm for next working day delivery
+          </p>
         </section>
       </div>
 
@@ -356,15 +352,64 @@ export default function CheckoutForm({
             )}
           </div>
 
+          {/* Discount Code */}
+          <div className="space-y-2 border-t border-white/10 pt-4">
+            <span className="text-xs uppercase tracking-[0.2em] text-white/60">Discount Code</span>
+            {discountCode ? (
+              <div className="flex items-center justify-between rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3">
+                <div>
+                  <p className="text-sm font-semibold text-green-400">{discountCode}</p>
+                  <p className="text-xs text-green-400/80">{discountMessage}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRemoveDiscount}
+                  disabled={isSubmitting}
+                  className="text-xs text-white/60 hover:text-white"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={discountInput}
+                  onChange={(e) => setDiscountInput(e.target.value.toUpperCase())}
+                  disabled={isSubmitting || isValidatingCode}
+                  placeholder="Enter code"
+                  className="flex-1 rounded-lg border border-white/20 bg-white/5 px-4 py-2 text-sm text-white placeholder-white/40 focus:border-white focus:outline-none disabled:opacity-50"
+                />
+                <button
+                  type="button"
+                  onClick={handleApplyDiscount}
+                  disabled={isSubmitting || isValidatingCode || !discountInput.trim()}
+                  className="rounded-lg border border-white/30 px-4 py-2 text-sm text-white transition hover:border-white disabled:opacity-50"
+                >
+                  {isValidatingCode ? "..." : "Apply"}
+                </button>
+              </div>
+            )}
+            {discountError && (
+              <p className="text-xs text-red-400">{discountError}</p>
+            )}
+          </div>
+
           {/* Totals */}
           <div className="space-y-2 border-t border-white/10 pt-4">
             <div className="flex justify-between text-sm text-white/80">
               <span>Subtotal</span>
               <span>{currencyFormatter.format(subtotal / 100)}</span>
             </div>
+            {discountAmountCents > 0 && (
+              <div className="flex justify-between text-sm text-green-400">
+                <span>Discount</span>
+                <span>-{currencyFormatter.format(discountAmountCents / 100)}</span>
+              </div>
+            )}
             <div className="flex justify-between text-sm text-white/80">
               <span>Shipping</span>
-              <span>{shippingCost === 0 ? "FREE" : currencyFormatter.format(shippingCost / 100)}</span>
+              <span>FREE</span>
             </div>
             <div className="flex justify-between text-lg font-semibold text-white pt-2 border-t border-white/10">
               <span>Total</span>

@@ -66,12 +66,12 @@ const template = `
             <td style="padding:30px;">
               
               <!-- Order Status -->
-              <div style="background:#fef3c7; border-radius:8px; padding:16px; margin-bottom:24px; text-align:center;">
-                <div style="font-size:12px; text-transform:uppercase; letter-spacing:2px; color:#92400e; margin-bottom:4px;">
+              <div style="background:#1a1a1a; border-radius:8px; padding:16px; margin-bottom:24px; text-align:center;">
+                <div style="font-size:12px; text-transform:uppercase; letter-spacing:2px; color:#999; margin-bottom:4px;">
                   Order Placed
                 </div>
-                <div style="font-size:18px; font-weight:700; color:#78350f;">
-                  Payment Required
+                <div style="font-size:18px; font-weight:700; color:#fbbf24;">
+                  Complete Your Payment
                 </div>
               </div>
 
@@ -128,21 +128,27 @@ const template = `
               <!-- Payment Instructions -->
               <div style="background:#0a0a0a; border-radius:8px; padding:24px; color:#fff;">
                 <div style="font-size:12px; text-transform:uppercase; letter-spacing:2px; color:#fbbf24; margin-bottom:12px;">
-                  ⚡ Complete Your Payment
+                  Complete Your Payment
                 </div>
                 <p style="font-size:14px; color:#ccc; margin:0 0 16px 0; line-height:1.6;">
                   To complete your order, please send payment via PayPal:
                 </p>
                 <ol style="font-size:14px; color:#fff; margin:0 0 20px 0; padding-left:20px; line-height:1.8;">
-                  <li>Go to <a href="https://paypal.me/{{paypalUsername}}" style="color:#fbbf24;">PayPal.me/{{paypalUsername}}</a></li>
-                  <li>Send <strong>{{totalAmount}}</strong></li>
-                  <li>Use order number <strong style="font-family:monospace;">{{orderNumber}}</strong> as reference</li>
+                  <li>Open PayPal and select <strong>Send</strong></li>
+                  <li>Send to: <strong>@{{paypalUsername}}</strong></li>
+                  <li>Amount: <strong>{{totalAmount}}</strong></li>
+                  <li>Select <strong>Friends & Family</strong> as payment type</li>
+                  <li>Add your order number as the note: <strong style="font-family:monospace;">{{orderNumber}}</strong></li>
                 </ol>
-                <div style="text-align:center;">
-                  <a href="https://paypal.me/{{paypalUsername}}/{{totalAmountDecimal}}GBP" 
-                     style="display:inline-block; background:#0070ba; color:#fff; padding:14px 28px; border-radius:8px; text-decoration:none; font-weight:700; font-size:14px;">
-                    Pay with PayPal
-                  </a>
+                <div style="background:#1a1a1a; border-radius:6px; padding:16px; margin-top:16px;">
+                  <p style="font-size:12px; color:#fbbf24; margin:0 0 8px 0; font-weight:700;">
+                    Important:
+                  </p>
+                  <p style="font-size:12px; color:#999; margin:0; line-height:1.5;">
+                    Please send as <strong style="color:#fff;">Friends & Family</strong> and include your order number in the note. 
+                    Payments not sent via Friends & Family will be refunded. If there's any issue with your order, 
+                    we handle all returns and refunds directly.
+                  </p>
                 </div>
                 <p style="font-size:12px; color:#888; margin:16px 0 0 0; text-align:center;">
                   Your order will be processed once payment is confirmed.

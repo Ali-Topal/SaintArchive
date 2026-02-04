@@ -2,13 +2,8 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { sendOrderConfirmationEmail } from "@/lib/email";
 
-// Shipping prices in pence
-const SHIPPING_PRICES = {
-  standard: 0, // Free
-  next_day: 599, // £5.99
-} as const;
-
-const FREE_SHIPPING_THRESHOLD = 5000; // £50 in pence
+// Free shipping on all orders
+const SHIPPING_COST = 0;
 
 type OrderBody = {
   productId?: string;
@@ -21,6 +16,19 @@ type OrderBody = {
   shippingCity?: string;
   shippingPostcode?: string;
   shippingMethod?: "standard" | "next_day";
+  discountCode?: string;
+};
+
+type DiscountCode = {
+  id: string;
+  code: string;
+  discount_type: "percentage" | "fixed";
+  discount_value: number;
+  min_order_cents: number;
+  max_uses: number | null;
+  current_uses: number;
+  is_active: boolean;
+  expires_at: string | null;
 };
 
 type ProductRow = {
@@ -48,19 +56,6 @@ function generateOrderNumber(): string {
   return `ORD-${code}`;
 }
 
-/**
- * Calculate shipping cost based on method and subtotal
- */
-function calculateShipping(
-  method: "standard" | "next_day",
-  subtotalCents: number
-): number {
-  // Free shipping for orders over threshold (only applies to standard)
-  if (method === "standard" && subtotalCents >= FREE_SHIPPING_THRESHOLD) {
-    return 0;
-  }
-  return SHIPPING_PRICES[method];
-}
 
 export async function POST(request: Request) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
@@ -91,6 +86,7 @@ export async function POST(request: Request) {
   const shippingCity = body.shippingCity?.trim() ?? "";
   const shippingPostcode = body.shippingPostcode?.trim().toUpperCase() ?? "";
   const shippingMethod = body.shippingMethod ?? "standard";
+  const discountCode = body.discountCode?.trim().toUpperCase() ?? "";
 
   // Validation
   if (!productId) {
@@ -194,10 +190,55 @@ export async function POST(request: Request) {
     );
   }
 
-  // Calculate totals
+  // Calculate totals (free shipping on all orders)
   const subtotalCents = product.price_cents * quantity;
-  const shippingCents = calculateShipping(shippingMethod, subtotalCents);
-  const totalAmountCents = subtotalCents + shippingCents;
+  
+  // Validate and apply discount code if provided
+  let discountAmountCents = 0;
+  let validatedDiscountCode: DiscountCode | null = null;
+  
+  if (discountCode) {
+    const { data: codeData, error: codeError } = await supabase
+      .from("discount_codes")
+      .select("*")
+      .eq("code", discountCode)
+      .single<DiscountCode>();
+
+    if (codeError || !codeData) {
+      return NextResponse.json({ error: "Invalid discount code." }, { status: 400 });
+    }
+
+    if (!codeData.is_active) {
+      return NextResponse.json({ error: "This discount code is no longer active." }, { status: 400 });
+    }
+
+    if (codeData.expires_at && new Date(codeData.expires_at) < new Date()) {
+      return NextResponse.json({ error: "This discount code has expired." }, { status: 400 });
+    }
+
+    if (codeData.max_uses !== null && codeData.current_uses >= codeData.max_uses) {
+      return NextResponse.json({ error: "This discount code has reached its usage limit." }, { status: 400 });
+    }
+
+    if (subtotalCents < codeData.min_order_cents) {
+      const minOrderFormatted = (codeData.min_order_cents / 100).toFixed(2);
+      return NextResponse.json(
+        { error: `Minimum order of £${minOrderFormatted} required for this code.` },
+        { status: 400 }
+      );
+    }
+
+    // Calculate discount
+    if (codeData.discount_type === "percentage") {
+      discountAmountCents = Math.round((subtotalCents * codeData.discount_value) / 100);
+    } else {
+      discountAmountCents = Math.min(codeData.discount_value, subtotalCents);
+    }
+    
+    validatedDiscountCode = codeData;
+  }
+
+  const totalAmountCents = subtotalCents - discountAmountCents + SHIPPING_COST;
 
   // Generate unique order number (with retry for collisions)
   let orderNumber = generateOrderNumber();
@@ -241,6 +282,8 @@ export async function POST(request: Request) {
       shipping_country: "GB",
       shipping_method: shippingMethod,
       total_amount_cents: totalAmountCents,
+      discount_code: validatedDiscountCode?.code || null,
+      discount_amount_cents: discountAmountCents,
       status: "pending_payment",
     })
     .select("id,order_number")
@@ -263,6 +306,18 @@ export async function POST(request: Request) {
   if (stockError) {
     console.error("[orders] Failed to update stock:", stockError.message);
     // Don't fail the order, but log for manual adjustment
+  }
+
+  // Increment discount code usage
+  if (validatedDiscountCode) {
+    const { error: discountError } = await supabase
+      .from("discount_codes")
+      .update({ current_uses: validatedDiscountCode.current_uses + 1 })
+      .eq("id", validatedDiscountCode.id);
+
+    if (discountError) {
+      console.error("[orders] Failed to update discount code usage:", discountError.message);
+    }
   }
 
   // Send confirmation email (don't block on this)
